@@ -67,7 +67,7 @@
 
     /* ---------- Home / Hero ---------- */
     .home-hero{max-width:1200px;margin:28px auto;padding:20px;border-radius:18px;height:320px;display:flex;gap:18px;align-items:center;justify-content:center;box-shadow:0 30px 80px rgba(0,0,0,0.35);background-image:url('SpikeHero.jpg');background-size:cover;background-position:center}
-    .hero-left{width:200px;height:200px;border-radius:12px;background-image:url('Spike2.jpg');background-size:cover;background-position:center}
+    .hero-left{width:200px;height:200px;border-radius:12px;background-image:url('/static/Spike2.jpg');background-size:cover;background-position:center}
     .hero-right{text-align:center}
     .hero-right h2{margin:0;font-size:24px;color:var(--desert-3);font-weight:900}
     .hero-right p{margin:6px 0 0 0;font-weight:800;color:rgba(43,26,16,0.95)}
@@ -108,7 +108,7 @@
     /* ---------- Login modal (styled) ---------- */
     .login-backdrop{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:linear-gradient(180deg, rgba(0,0,0,0.45), rgba(0,0,0,0.6));z-index:1000;padding:20px}
     .login-card{width:420px;border-radius:14px;padding:18px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.02));box-shadow:0 30px 80px rgba(0,0,0,0.6);border:1px solid rgba(0,0,0,0.08);display:grid;grid-template-columns:96px 1fr;gap:12px;align-items:center}
-    .login-avatar{width:96px;height:96px;border-radius:12px;background-image:url('Spike2.jpg');background-size:cover;background-position:center;border:4px solid rgba(255,255,255,0.03);box-shadow:0 8px 30px rgba(0,0,0,0.3)}
+    .login-avatar{width:96px;height:96px;border-radius:12px;background-image:url('/static/Spike2.jpg');background-size:cover;background-position:center;border:4px solid rgba(255,255,255,0.03);box-shadow:0 8px 30px rgba(0,0,0,0.3)}
     .login-form{grid-column:1 / -1;display:flex;flex-direction:column;gap:10px;margin-top:6px}
     .login-form input{padding:10px;border-radius:10px;border:1px solid rgba(0,0,0,0.06);background:rgba(255,255,255,0.02);color:var(--text);font-weight:800}
 
@@ -216,7 +216,7 @@
               <span class="status-dot dot-live" aria-hidden="true"></span>
               <span class="status-label">Unavailable</span>
             </div>
-            <div class="card-details" data-img="Spike2.jpg" data-text="Sorry u can't view me live right now!" style="display:none"></div>
+            <div class="card-details" data-img="/static/Spike2.jpg" data-text="Sorry u can't view me live right now!" style="display:none"></div>
           </div>
 
           <div id="card-health" class="card health" tabindex="0" aria-label="Health">
@@ -293,7 +293,7 @@
   <div id="jokeOverlay" class="backdrop" aria-hidden="true">
     <div class="modal" role="dialog" aria-modal="true">
       <div style="display:flex;gap:12px;align-items:flex-start">
-        <img id="jokeImg" src="{{ url_for('static', filename='Spike2.jpg') }}" alt="Spike" style="width:160px;height:160px;border-radius:12px;object-fit:cover">
+        <img id="jokeImg" src="{{ url_for('static', filename='/static/Spike2.jpg') }}" alt="Spike" style="width:160px;height:160px;border-radius:12px;object-fit:cover">
         <div style="flex:1">
           <h3 id="jokeTitle">Spike's Joke of the Day</h3>
           <p id="jokeText" style="font-weight:900;margin-top:8px">Loading joke...</p>
@@ -329,7 +329,7 @@
   <div id="liveBackdrop" class="backdrop" aria-hidden="true">
     <div class="modal">
       <div style="display:flex;gap:12px;align-items:center">
-        <img id="liveImg" src="{{ url_for('static', filename='Spike2.jpg') }}" alt="Spike" style="width:220px;height:220px;border-radius:12px;object-fit:cover">
+        <img id="liveImg" src="{{ url_for('static', filename='/static/Spike2.jpg') }}" alt="Spike" style="width:220px;height:220px;border-radius:12px;object-fit:cover">
         <div style="flex:1">
           <h3>View Spike Live</h3>
           <p style="font-weight:900;margin-top:8px" id="liveText">Sorry u can't view me live right now!</p>
@@ -367,7 +367,7 @@
   <!-- UNAUTHORIZED overlay -->
   <div id="unauthBackdrop" class="unauth-backdrop" aria-hidden="true">
     <div class="unauth-card">
-      <img src="{{ url_for('static', filename='Spike5.jpg') }}" alt="Not allowed" />
+      <img src="{{ url_for('static', filename='/static/Spike5.jpg') }}" alt="Not allowed" />
       <h2>U ARE NOT ALLOWED IN HERE WITH US.</h2>
       <p>ENJOY MY WEBSITE WITHOUT CONTROLS!</p>
       <div style="margin-top:12px"><button id="unauthClose" class="btn small">Close</button></div>
@@ -503,12 +503,12 @@
 
   <script>
     /* ---------- Assets & data ---------- */
-    const MASCOT = 'Spike2.jpg';
+    const MASCOT = '/static/Spike2.jpg';
     const HERO = 'SpikeHero.jpg';
     const PHOTOS = [
-      { src: 'Spike1.jpg', title: 'Spike basking', caption: 'Sunny morning bask' },
-      { src: 'Spike2.jpg', title: 'Spike close-up', caption: 'Curious little face' },
-      { src: 'Spike3.jpg', title: 'Spike exploring', caption: 'First adventure outside the tank' }
+      { src: '/static/Spike1.jpg', title: 'Spike basking', caption: 'Sunny morning bask' },
+      { src: '/static/Spike2.jpg', title: 'Spike close-up', caption: 'Curious little face' },
+      { src: '/static/Spike3.jpg', title: 'Spike exploring', caption: 'First adventure outside the tank' }
     ];
 
     /* ---------- Safe page routing (hash-based) ---------- */
@@ -1102,7 +1102,7 @@
     (function preload(){
       [HERO, MASCOT].forEach(s => { const i = new Image(); i.src = s; });
       PHOTOS.forEach(p => { const i = new Image(); i.src = p.src; });
-      const spike5 = new Image(); spike5.src = 'Spike5.jpg';
+      const spike5 = new Image(); spike5.src = '/static/Spike5.jpg';
     })();
   </script>
 </body>
