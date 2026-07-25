@@ -66,7 +66,7 @@
     .muted{color:var(--muted);font-weight:800}
 
     /* ---------- Home / Hero ---------- */
-    .home-hero{max-width:1200px;margin:28px auto;padding:20px;border-radius:18px;height:320px;display:flex;gap:18px;align-items:center;justify-content:center;box-shadow:0 30px 80px rgba(0,0,0,0.35);background-image:url('SpikeHero.jpg');background-size:cover;background-position:center}
+    .home-hero{max-width:1200px;margin:28px auto;padding:20px;border-radius:18px;height:320px;display:flex;gap:18px;align-items:center;justify-content:center;box-shadow:0 30px 80px rgba(0,0,0,0.35);background-image:url('/static/Spike2.jpg');background-size:cover;background-position:center}
     .hero-left{width:200px;height:200px;border-radius:12px;background-image:url('/static/Spike2.jpg');background-size:cover;background-position:center}
     .hero-right{text-align:center}
     .hero-right h2{margin:0;font-size:24px;color:var(--desert-3);font-weight:900}
@@ -320,7 +320,7 @@
   <div id="videoBackdrop" class="backdrop" aria-hidden="true">
     <div class="modal">
       <h3 id="videoTitle">Thank you guys... (Spike & Brycton)</h3>
-      <div style="margin-top:12px"><video id="modalVideo" controls style="width:100%;border-radius:8px" poster="{{ url_for('static', filename='Spike2.jpg') }}"><source src="spike_brycton_thanks.mp4" type="video/mp4"></video></div>
+      <div style="margin-top:12px"><video id="modalVideo" controls style="width:100%;border-radius:8px" poster="{{ url_for('static', filename='Spike2.jpg') }}"><source src="{{ url_for('static', filename='spike_brycton_thanks.mp4') }}" type="video/mp4"></video></div>
       <div style="text-align:right;margin-top:12px"><button id="closeVideo" class="btn small">Close</button></div>
     </div>
   </div>
@@ -504,7 +504,7 @@
   <script>
     /* ---------- Assets & data ---------- */
     const MASCOT = '/static/Spike2.jpg';
-    const HERO = 'SpikeHero.jpg';
+    const HERO = '/static/Spike2.jpg';
     const PHOTOS = [
       { src: '/static/Spike1.jpg', title: 'Spike basking', caption: 'Sunny morning bask' },
       { src: '/static/Spike2.jpg', title: 'Spike close-up', caption: 'Curious little face' },
@@ -1107,6 +1107,7 @@
   </script>
 </body>
 </html>
+
 
 
 
