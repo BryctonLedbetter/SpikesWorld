@@ -293,7 +293,7 @@
   <div id="jokeOverlay" class="backdrop" aria-hidden="true">
     <div class="modal" role="dialog" aria-modal="true">
       <div style="display:flex;gap:12px;align-items:flex-start">
-        <img id="jokeImg" src="Spike2.jpg" alt="Spike" style="width:160px;height:160px;border-radius:12px;object-fit:cover">
+        <img id="jokeImg" src="{{ url_for('static', filename='Spike2.jpg') }}" alt="Spike" style="width:160px;height:160px;border-radius:12px;object-fit:cover">
         <div style="flex:1">
           <h3 id="jokeTitle">Spike's Joke of the Day</h3>
           <p id="jokeText" style="font-weight:900;margin-top:8px">Loading joke...</p>
@@ -329,7 +329,7 @@
   <div id="liveBackdrop" class="backdrop" aria-hidden="true">
     <div class="modal">
       <div style="display:flex;gap:12px;align-items:center">
-        <img id="liveImg" src="Spike2.jpg" alt="Spike" style="width:220px;height:220px;border-radius:12px;object-fit:cover">
+        <img id="liveImg" src="{{ url_for('static', filename='Spike2.jpg') }}" alt="Spike" style="width:220px;height:220px;border-radius:12px;object-fit:cover">
         <div style="flex:1">
           <h3>View Spike Live</h3>
           <p style="font-weight:900;margin-top:8px" id="liveText">Sorry u can't view me live right now!</p>
@@ -367,7 +367,7 @@
   <!-- UNAUTHORIZED overlay -->
   <div id="unauthBackdrop" class="unauth-backdrop" aria-hidden="true">
     <div class="unauth-card">
-      <img src="Spike5.jpg" alt="Not allowed" />
+      <img src="{{ url_for('static', filename='Spike5.jpg') }}" alt="Not allowed" />
       <h2>U ARE NOT ALLOWED IN HERE WITH US.</h2>
       <p>ENJOY MY WEBSITE WITHOUT CONTROLS!</p>
       <div style="margin-top:12px"><button id="unauthClose" class="btn small">Close</button></div>
