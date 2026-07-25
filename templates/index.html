@@ -320,7 +320,7 @@
   <div id="videoBackdrop" class="backdrop" aria-hidden="true">
     <div class="modal">
       <h3 id="videoTitle">Thank you guys... (Spike & Brycton)</h3>
-      <div style="margin-top:12px"><video id="modalVideo" controls style="width:100%;border-radius:8px" poster="spike_brycton_poster.jpg"><source src="spike_brycton_thanks.mp4" type="video/mp4"></video></div>
+      <div style="margin-top:12px"><video id="modalVideo" controls style="width:100%;border-radius:8px" poster="{{ url_for('static', filename='Spike2.jpg') }}"><source src="spike_brycton_thanks.mp4" type="video/mp4"></video></div>
       <div style="text-align:right;margin-top:12px"><button id="closeVideo" class="btn small">Close</button></div>
     </div>
   </div>
@@ -1107,6 +1107,7 @@
   </script>
 </body>
 </html>
+
 
 
 
