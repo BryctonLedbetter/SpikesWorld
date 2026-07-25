@@ -532,6 +532,7 @@
     /* ---------- Safe page routing (hash-based) ---------- */
     const homePage = document.getElementById('homePage');
     const dashboardPage = document.getElementById('dashboardPage');
+    const adminPage = document.getElementById('adminPage');
     const adminPageInner = document.querySelector('.admin-page');
 
     function showPageByHash(){
@@ -540,12 +541,14 @@
       // Hide everything first
       homePage.classList.remove('active');
       dashboardPage.classList.remove('active');
+      adminPage.classList.remove('active');
       if (adminPageInner) adminPageInner.style.display = 'none';
 
       // Show only the requested page
       if (h === 'dashboard') {
         dashboardPage.classList.add('active');
       } else if (h === 'admin') {
+        adminPage.classList.add('active');
         if (adminPageInner) adminPageInner.style.display = 'block';
       } else {
         homePage.classList.add('active');
@@ -1138,6 +1141,7 @@ arr.push({
   </script>
 </body>
 </html>
+
 
 
 
