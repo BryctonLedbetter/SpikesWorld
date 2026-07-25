@@ -808,7 +808,16 @@
       const when = document.getElementById('annDate').value || null;
       if (!text){ alert('Enter announcement text'); return; }
       const arr = loadAnnouncements();
-      arr.push({title, text, when});
+      const duration = Number(document.getElementById("annDuration").value);
+const expires = Date.now() + (duration * 60 * 1000);
+
+arr.length = 0;
+
+arr.push({
+  title: "Announcement",
+  text,
+  expires
+});
       saveAnnouncements(arr);
       document.getElementById('annTitle').value = '';
       document.getElementById('annText').value = '';
@@ -1120,6 +1129,7 @@
   </script>
 </body>
 </html>
+
 
 
 
