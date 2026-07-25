@@ -420,6 +420,19 @@
               <input id="annDate" type="datetime-local" style="width:220px;padding:8px;border-radius:8px;border:1px solid rgba(0,0,0,0.06)" />
             </div>
             <textarea id="annText" placeholder="Announcement text" style="width:100%;margin-top:8px;padding:8px;border-radius:8px;border:1px solid rgba(0,0,0,0.06)"></textarea>
+
+<div style="margin-top:8px">
+  <label>Duration</label>
+  <select id="annDuration" style="padding:8px;border-radius:8px;border:1px solid rgba(0,0,0,0.06)">
+    <option value="5">5 Minutes</option>
+    <option value="15">15 Minutes</option>
+    <option value="30">30 Minutes</option>
+    <option value="45">45 Minutes</option>
+    <option value="60">1 Hour</option>
+    <option value="90">1 Hour 30 Minutes</option>
+    <option value="120">2 Hours</option>
+  </select>
+</div>
             <div style="display:flex;gap:8px;margin-top:8px">
               <button id="addAnnouncement" class="btn small">Add Announcement</button>
               <button id="clearAnnouncements" class="btn small">Clear All</button>
@@ -1107,6 +1120,7 @@
   </script>
 </body>
 </html>
+
 
 
 
