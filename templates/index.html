@@ -775,7 +775,11 @@
 
     /* ---------- Announcements UI ---------- */
     function renderAnnouncements(){
-      const list = loadAnnouncements();
+      let list = loadAnnouncements();
+
+      list = list.filter(a => !a.expires || a.expires > Date.now());
+
+      saveAnnouncements(list);
       const container = document.getElementById('annList');
       const dash = document.getElementById('dashboardAnnouncements');
       if (!container || !dash) return;
@@ -1129,6 +1133,7 @@ arr.push({
   </script>
 </body>
 </html>
+
 
 
 
