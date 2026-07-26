@@ -66,8 +66,8 @@
     .muted{color:var(--muted);font-weight:800}
 
     /* ---------- Home / Hero ---------- */
-    .home-hero{max-width:1200px;margin:28px auto;padding:20px;border-radius:18px;height:320px;display:flex;gap:18px;align-items:center;justify-content:center;box-shadow:0 30px 80px rgba(0,0,0,0.35);background-image:url('/static/Spike2.jpg');background-size:cover;background-position:center}
-    .hero-left{width:200px;height:200px;border-radius:12px;background-image:url('/static/Spike2.jpg');background-size:cover;background-position:center}
+    .home-hero{max-width:100%;margin:0;padding:20px;border-radius:18px;height:520px;display:flex;gap:18px;align-items:center;justify-content:center;box-shadow:0 30px 80px rgba(0,0,0,0.35);background-image:url('/static/desert-background.jpg');background-size:cover;background-position:center}
+    .hero-left{width:200px;height:200px;border-radius:12px;background-image:url('/static/desert-background.jpg');background-size:cover;background-position:center}
     .hero-right{text-align:center}
     .hero-right h2{margin:0;font-size:24px;color:var(--desert-3);font-weight:900}
     .hero-right p{margin:6px 0 0 0;font-weight:800;color:rgba(43,26,16,0.95)}
@@ -108,12 +108,12 @@
     /* ---------- Login modal (styled) ---------- */
     .login-backdrop{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:linear-gradient(180deg, rgba(0,0,0,0.45), rgba(0,0,0,0.6));z-index:1000;padding:20px}
     .login-card{width:420px;border-radius:14px;padding:18px;background:linear-gradient(180deg, rgba(210,150,90,1), rgba(176,122,72,1));box-shadow:0 30px 80px rgba(0,0,0,0.6);border:1px solid rgba(0,0,0,0.08);display:grid;grid-template-columns:96px 1fr;gap:12px;align-items:center}
-    .login-avatar{width:96px;height:96px;border-radius:12px;background-image:url('/static/Spike2.jpg');background-size:cover;background-position:center;border:4px solid rgba(255,255,255,0.03);box-shadow:0 8px 30px rgba(0,0,0,0.3)}
+    .login-avatar{width:96px;height:96px;border-radius:12px;background-image:url('/static/desert-background.jpg');background-size:cover;background-position:center;border:4px solid rgba(255,255,255,0.03);box-shadow:0 8px 30px rgba(0,0,0,0.3)}
     .login-form{grid-column:1 / -1;display:flex;flex-direction:column;gap:10px;margin-top:6px}
     .login-form input{padding:10px;border-radius:10px;border:1px solid rgba(0,0,0,0.06);background:#f4e0c0;color:var(--text);font-weight:800}
 
     /* ---------- Admin page layout ---------- */
-    .admin-page{max-width:1200px;margin:28px auto;padding:20px;border-radius:14px;background:linear-gradient(180deg,var(--card-top),var(--card-bottom));box-shadow:var(--shadow)}
+    .admin-page{max-width:100%;margin:0;padding:20px;border-radius:14px;background:linear-gradient(180deg,var(--card-top),var(--card-bottom));box-shadow:var(--shadow)}
     .admin-grid{display:grid;grid-template-columns:260px 1fr;gap:18px}
     .sidebar{background:var(--glass);padding:12px;border-radius:10px;border:1px solid rgba(0,0,0,0.04)}
     .nav-item{padding:10px;border-radius:8px;cursor:pointer;font-weight:900;color:var(--text);display:flex;justify-content:space-between;align-items:center}
@@ -1212,6 +1212,9 @@ arr.push({
   </script>
 </body>
 </html>
+
+
+
 
 
 
