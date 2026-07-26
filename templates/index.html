@@ -147,7 +147,7 @@
       .people-list{grid-template-columns:1fr}
     }
   </style>
-  <script src="{{ url_for('static', filename='hls.min.js') }}"></script>
+  <script type="module" src="{{ url_for('static', filename='video-rtc.js') }}"></script>
 </head>
 <body>
 
@@ -368,7 +368,7 @@
     <div class="modal">
       <h3>View Spike Live 🦎</h3>
       <div style="margin-top:12px">
-        <video id="spikeLive" autoplay muted playsinline controls style="width:100%;border-radius:8px;background:#000"></video>
+        <div id="spikeLiveHolder" style="width:100%;min-height:320px;border-radius:8px;background:#000;overflow:hidden"></div>
       </div>
       <p id="liveStatus" style="font-weight:900;margin-top:8px;color:var(--muted)">Connecting…</p>
       <div style="text-align:right;margin-top:12px"><button id="closeLive" class="btn small">Close</button></div>
@@ -709,41 +709,35 @@
     const playSmall = document.getElementById('playSmall');
     if (playSmall) playSmall.addEventListener('click', openVideoModal);
 
-    /* ---------- Live modal (HLS via go2rtc) ---------- */
+    /* ---------- Live modal (go2rtc MSE via WebSocket) ---------- */
     const liveBackdrop = document.getElementById('liveBackdrop');
-    const HLS_URL = 'https://brycton.kingscorner.us/live/api/stream.m3u8?src=pet_cam';
-    let spikeHls = null;
+    const WS_URL = 'wss://brycton.kingscorner.us/live/api/ws?src=pet_cam';
+    let spikeStream = null;
+    let spikeCheck = null;
 
     function startSpikeLive(){
       stopSpikeLive();
       const statusEl = document.getElementById('liveStatus');
-      const videoEl = document.getElementById('spikeLive');
-      statusEl.textContent = 'Connecting…';
-      const onPlaying = () => { statusEl.textContent = 'Live'; };
-      videoEl.addEventListener('playing', onPlaying, { once: true });
-      if (videoEl.canPlayType('application/vnd.apple.mpegurl')) {
-        // Native HLS (Safari / iOS)
-        videoEl.src = HLS_URL;
-        videoEl.play().catch(()=>{});
-      } else if (window.Hls && window.Hls.isSupported()) {
-        spikeHls = new Hls({ lowLatencyMode: true });
-        spikeHls.loadSource(HLS_URL);
-        spikeHls.attachMedia(videoEl);
-        spikeHls.on(Hls.Events.MANIFEST_PARSED, () => { videoEl.play().catch(()=>{}); });
-        spikeHls.on(Hls.Events.ERROR, (evt, data) => {
-          if (data && data.fatal) {
-            statusEl.textContent = "Spike's camera is offline right now — check back soon!";
-          }
-        });
-      } else {
-        statusEl.textContent = "Your browser can't play the live stream.";
-      }
+      const holder = document.getElementById('spikeLiveHolder');
+      statusEl.textContent = 'Connecting\u2026';
+      spikeStream = document.createElement('video-stream');
+      spikeStream.setAttribute('mode', 'mse');
+      spikeStream.style.width = '100%';
+      spikeStream.style.display = 'block';
+      holder.appendChild(spikeStream);
+      try { spikeStream.mode = 'mse'; spikeStream.src = WS_URL; } catch(e){}
+      spikeCheck = setInterval(() => {
+        const v = spikeStream && spikeStream.video;
+        if (v && !v.paused && v.readyState >= 3) { statusEl.textContent = 'Live'; clearInterval(spikeCheck); spikeCheck = null; }
+      }, 400);
+      setTimeout(() => { if (statusEl.textContent.indexOf('Connecting') === 0) statusEl.textContent = "Spike's camera is waking up\u2026 give it a moment!"; }, 9000);
     }
 
     function stopSpikeLive(){
-      const v = document.getElementById('spikeLive');
-      if (spikeHls){ try { spikeHls.destroy(); } catch(e){} spikeHls = null; }
-      if (v){ try { v.pause(); } catch(e){} v.removeAttribute('src'); v.load(); }
+      if (spikeCheck){ clearInterval(spikeCheck); spikeCheck = null; }
+      if (spikeStream){ try { spikeStream.src = ''; } catch(e){} try { spikeStream.remove(); } catch(e){} spikeStream = null; }
+      const holder = document.getElementById('spikeLiveHolder');
+      if (holder) holder.innerHTML = '';
     }
 
     function openLiveModalFromCard(card){
