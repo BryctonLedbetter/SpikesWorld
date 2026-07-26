@@ -264,7 +264,7 @@
       <div class="nav-item"><span class="ico">🖼️</span> Pictures of Spike</div>
       <div class="nav-item"><span class="ico">❤️</span> Spike's Health</div>
       <div class="nav-item"><span class="ico">📅</span> Age Tracking</div>
-      <div class="nav-item"><span class="ico">ℹ️</span> More About Spike</div>
+      <div class="nav-item"><span class="ico">ℹ️</span> More About Dragons</div>
       <div class="nav-item"><span class="ico">👥</span> Spike's Caretakers</div>
       <div class="nav-item"><span class="ico">💧</span> Tank Condition</div>
       <div class="nav-item"><span class="ico">🎬</span> Thank You Video</div>
@@ -344,7 +344,7 @@
         </div>
 
         <div class="card">
-          <h3><span class="ico">ℹ️</span> More About Spike</h3>
+          <h3><span class="ico">ℹ️</span> More About Dragons</h3>
           <p>Learn about Spike's personality</p>
           <div class="card-actions"><button class="btn">View Details</button></div>
         </div>
@@ -455,6 +455,147 @@
         }
       }
       check(); setInterval(check, 20000);
+    })();
+  </script>
+  <!-- ===== Dragon facts modal ===== -->
+  <div id="factsBackdrop" style="position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.7);z-index:1000;padding:20px">
+    <div class="card" style="max-width:640px;width:100%">
+      <h3><span class="ico">🐉</span> More About Dragons</h3>
+      <ul id="factsList" style="line-height:1.7;margin:12px 0;padding-left:20px"></ul>
+      <div class="card-actions" style="text-align:right"><button class="btn" id="closeFacts">Close</button></div>
+    </div>
+  </div>
+
+  <!-- ===== Photo gallery modal ===== -->
+  <div id="galleryBackdrop" style="position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.75);z-index:1000;padding:20px">
+    <div class="card" style="max-width:900px;width:100%;max-height:90vh;overflow:auto">
+      <h3><span class="ico">🖼️</span> Pictures of Spike</h3>
+      <div id="galleryGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-top:12px"></div>
+      <div class="card-actions" style="text-align:right"><button class="btn" id="closeGallery">Close</button></div>
+    </div>
+  </div>
+
+  <script>
+    // ===== Live content wiring (reads /api/content, fills the cards) =====
+    (function(){
+      function esc(s){ const d=document.createElement('div'); d.textContent=(s==null?'':String(s)); return d.innerHTML; }
+      function cardByHeading(t){
+        return Array.prototype.slice.call(document.querySelectorAll('.card'))
+          .find(function(c){ var h=c.querySelector('h3'); return h && h.textContent.indexOf(t)!==-1; });
+      }
+      function btnInCard(card){ return card ? card.querySelector('.card-actions .btn, .card-actions button') : null; }
+
+      const DRAGON_FACTS = [
+        "🏜️ Bearded dragons come from the deserts and dry woodlands of central Australia.",
+        "🧔 Their 'beard' is spiky throat skin that puffs up and turns dark when they're excited or feel threatened.",
+        "☀️ They're cold-blooded, so they bask in heat to warm up before eating.",
+        "🥗 They're omnivores — babies eat more bugs, adults eat more leafy greens.",
+        "👋 They 'arm wave' and head-bob to communicate with each other.",
+        "👁️ They have a 'third eye' on top of their head that senses light and shadows from above.",
+        "🏃 When scared, they can run on just their two back legs!",
+        "⏳ With great care, bearded dragons can live 10–15 years."
+      ];
+
+      async function loadContent(){
+        let d;
+        try {
+          const r = await fetch('/api/content', { cache:'no-store' });
+          if (!r.ok) return;
+          d = await r.json();
+        } catch(e){ return; }
+
+        // --- Announcement (newest) ---
+        const ann = cardByHeading('Current Announcement');
+        if (ann){
+          ann.querySelectorAll('p').forEach(function(p){ p.remove(); });
+          const box = document.createElement('div');
+          const a = (d.announcements && d.announcements[0]) || null;
+          if (a){
+            box.innerHTML =
+              '<p><strong style="color:var(--cream)">'+esc(a.title)+'</strong></p>' +
+              '<p style="margin-top:6px">'+esc(a.body)+'</p>' +
+              '<p style="margin-top:8px;font-size:12px;color:var(--muted)">'+esc(a.created_at)+'</p>';
+          } else {
+            box.innerHTML = '<p style="color:var(--muted)">No announcements yet.</p>';
+          }
+          ann.appendChild(box);
+        }
+
+        // --- Tank condition ---
+        const tank = cardByHeading('Tank Condition');
+        if (tank && d.tank){
+          tank.querySelectorAll('p').forEach(function(p){ p.remove(); });
+          const p = document.createElement('p');
+          p.innerHTML =
+            '🔥 Hot side: <strong>'+esc(d.tank.hot||'—')+'</strong><br>' +
+            '❄️ Cool side: <strong>'+esc(d.tank.cool||'—')+'</strong><br>' +
+            '💧 Humidity: <strong>'+esc(d.tank.humidity||'—')+'</strong>';
+          const h = tank.querySelector('h3');
+          if (h) h.insertAdjacentElement('afterend', p);
+        }
+
+        // --- Health ---
+        const health = cardByHeading("Spike's Health");
+        if (health && d.health){
+          const notes = health.querySelector('p');
+          if (notes) notes.textContent = d.health.notes || '';
+          const st = health.querySelector('.status');
+          if (st) st.innerHTML = '<span class="dot is-good"></span> '+esc(d.health.status||'');
+        }
+
+        // --- Pictures gallery ---
+        const photos = d.photos || [];
+        const pics = cardByHeading('Pictures of Spike');
+        if (pics){
+          const summ = pics.querySelector('p');
+          if (summ) summ.textContent = photos.length ? (photos.length + ' photo' + (photos.length>1?'s':'')) : 'No photos yet';
+          const gbtn = btnInCard(pics);
+          if (gbtn) gbtn.addEventListener('click', function(){ openGallery(photos); });
+        }
+      }
+
+      // gallery modal
+      const galleryBackdrop = document.getElementById('galleryBackdrop');
+      const galleryGrid = document.getElementById('galleryGrid');
+      function openGallery(photos){
+        galleryGrid.innerHTML = photos.length ? '' : '<p style="color:var(--muted)">No photos yet — check back soon!</p>';
+        photos.forEach(function(p){
+          const fig = document.createElement('figure');
+          fig.style.margin='0';
+          fig.innerHTML =
+            '<img src="'+p.url+'" alt="'+esc(p.caption)+'" style="width:100%;height:150px;object-fit:cover;border-radius:10px;display:block">' +
+            (p.caption ? '<figcaption style="font-size:12px;color:var(--muted);margin-top:4px">'+esc(p.caption)+'</figcaption>' : '');
+          galleryGrid.appendChild(fig);
+        });
+        galleryBackdrop.style.display='flex';
+      }
+      document.getElementById('closeGallery').addEventListener('click', function(){ galleryBackdrop.style.display='none'; });
+
+      // dragon facts modal
+      const factsBackdrop = document.getElementById('factsBackdrop');
+      const factsList = document.getElementById('factsList');
+      factsList.innerHTML = DRAGON_FACTS.map(function(f){ return '<li>'+f+'</li>'; }).join('');
+      const dragonsCard = (function(){
+        return Array.prototype.slice.call(document.querySelectorAll('.card'))
+          .find(function(c){ var h=c.querySelector('h3'); return h && h.textContent.indexOf('More About Dragons')!==-1; });
+      })();
+      if (dragonsCard){
+        const summ = dragonsCard.querySelector('p');
+        if (summ) summ.textContent = 'Fun facts about bearded dragons!';
+        const b = dragonsCard.querySelector('.card-actions .btn, .card-actions button');
+        if (b) b.addEventListener('click', function(){ factsBackdrop.style.display='flex'; });
+      }
+      document.getElementById('closeFacts').addEventListener('click', function(){ factsBackdrop.style.display='none'; });
+
+      document.addEventListener('keydown', function(e){
+        if (e.key==='Escape'){
+          galleryBackdrop.style.display='none';
+          factsBackdrop.style.display='none';
+        }
+      });
+
+      loadContent();
+      setInterval(loadContent, 30000);
     })();
   </script>
 </body>
