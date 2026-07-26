@@ -146,7 +146,15 @@
       .login-card{width:92%;grid-template-columns:84px 1fr}
       .people-list{grid-template-columns:1fr}
     }
-  </style>
+      /* live status pulse */
+    #liveDot.is-live{ background:#2ecc71; animation: livePulse 1.6s ease-in-out infinite; }
+    #liveDot.is-off{ background:#9a8b78; animation:none; }
+    @keyframes livePulse{
+      0%   { box-shadow:0 0 0 0 rgba(46,204,113,0.55); }
+      70%  { box-shadow:0 0 0 10px rgba(46,204,113,0); }
+      100% { box-shadow:0 0 0 0 rgba(46,204,113,0); }
+    }
+</style>
   <script type="module" src="{{ url_for('static', filename='video-stream.js') }}"></script>
 </head>
 <body>
@@ -263,8 +271,8 @@
             <h3>View Spike Live</h3>
             <div class="card-summary">Live stream status</div>
             <div class="status-row">
-              <span class="status-dot dot-live" aria-hidden="true"></span>
-              <span class="status-label">Unavailable</span>
+              <span id="liveDot" class="status-dot dot-live" aria-hidden="true"></span>
+              <span id="liveLabel" class="status-label">Unavailable</span>
             </div>
             <div class="card-details" data-img="/static/Spike2.jpg" data-text="Sorry u can't view me live right now!" style="display:none"></div>
           </div>
@@ -1232,6 +1240,34 @@ arr.push({
       [HERO, MASCOT].forEach(s => { const i = new Image(); i.src = s; });
       PHOTOS.forEach(p => { const i = new Image(); i.src = p.src; });
       const spike5 = new Image(); spike5.src = '/static/Spike5.jpg';
+    })();
+  </script>
+  <script>
+    (function(){
+      const STREAMS_URL = 'https://brycton.kingscorner.us/live/api/streams?src=pet_cam';
+      async function checkSpikeStatus(){
+        const dot = document.getElementById('liveDot');
+        const label = document.getElementById('liveLabel');
+        if (!dot || !label) return;
+        try {
+          const r = await fetch(STREAMS_URL, { cache: 'no-store' });
+          if (!r.ok) throw new Error('http ' + r.status);
+          const data = await r.json();
+          const live = data && Array.isArray(data.producers) && data.producers.length > 0;
+          if (live){
+            dot.classList.remove('dot-live','is-off'); dot.classList.add('is-live');
+            label.textContent = 'Live';
+          } else {
+            dot.classList.remove('dot-live','is-live'); dot.classList.add('is-off');
+            label.textContent = 'Unavailable';
+          }
+        } catch(e){
+          dot.classList.remove('dot-live','is-live'); dot.classList.add('is-off');
+          label.textContent = 'Unavailable';
+        }
+      }
+      checkSpikeStatus();
+      setInterval(checkSpikeStatus, 20000);
     })();
   </script>
 </body>
