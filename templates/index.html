@@ -178,6 +178,18 @@
         </div>
       </div>
     </section>
+
+  <div id="homeAnnouncement"
+       style="display:none;max-width:760px;margin:12px auto 20px auto;padding:14px;border-radius:12px;background:linear-gradient(180deg,rgba(230,200,160,.95),rgba(190,140,90,.95));box-shadow:0 8px 20px rgba(0,0,0,.15);color:#2b1a10;">
+    <div style="font-size:18px;font-weight:900;margin-bottom:6px;">
+      ?? Current Announcement
+    </div>
+
+    <div id="homeAnnouncementText"></div>
+
+    <div id="homeAnnouncementAuthor"
+         style="margin-top:8px;font-size:13px;opacity:.85;"></div>
+  </div>
   </main>
 
   <!-- DASHBOARD page (separate page) -->
@@ -187,7 +199,21 @@
         <div class="dash-top">
           <div>
             <div class="dash-title">Dashboard</div>
-            <div class="dash-sub">Spike's live status, health, tank and more</div>
+            <div class="dash-sub">Spike''s live status, health, tank and more</div>
+
+<div id="dashboardTopAnnouncement"
+     style="display:none;margin-top:12px;padding:14px;border-radius:12px;background:linear-gradient(180deg,rgba(230,200,160,.95),rgba(190,140,90,.95));box-shadow:0 8px 20px rgba(0,0,0,.15);color:#2b1a10;">
+
+  <div style="font-size:18px;font-weight:900;margin-bottom:6px;">
+    ?? Current Announcement
+  </div>
+
+  <div id="dashboardTopAnnouncementText"></div>
+
+  <div id="dashboardTopAnnouncementAuthor"
+       style="margin-top:8px;font-size:13px;opacity:.85;"></div>
+
+</div>
           </div>
           <div style="display:flex;gap:8px;align-items:center">
             <button id="backHomeBtn" class="btn small">← Home</button>
@@ -432,10 +458,11 @@
     <option value="5">5 Minutes</option>
     <option value="15">15 Minutes</option>
     <option value="30">30 Minutes</option>
-    <option value="45">45 Minutes</option>
     <option value="60">1 Hour</option>
-    <option value="90">1 Hour 30 Minutes</option>
-    <option value="120">2 Hours</option>
+    <option value="360">6 Hours</option>
+    <option value="720">12 Hours</option>
+    <option value="1440">24 Hours</option>
+    <option value="2880">48 Hours (2 Days)</option>
   </select>
 </div>
             <div style="display:flex;gap:8px;margin-top:8px">
@@ -803,6 +830,34 @@
       const dashHtml = list.length ? list.map(a => `<div style="padding:8px;border-bottom:1px solid rgba(0,0,0,0.04)"><strong>${a.title}</strong><div style="font-size:13px;color:var(--muted)">${a.text}</div></div>`).join('') : '<div class="muted">No announcements yet.</div>';
       document.getElementById('dashboardAnnouncements').innerHTML = dashHtml;
 
+      const homeBanner = document.getElementById('homeAnnouncement');
+      const homeText = document.getElementById('homeAnnouncementText');
+      const homeAuthor = document.getElementById('homeAnnouncementAuthor');
+
+      const topBanner = document.getElementById('dashboardTopAnnouncement');
+      const topText = document.getElementById('dashboardTopAnnouncementText');
+      const topAuthor = document.getElementById('dashboardTopAnnouncementAuthor');
+
+      if (list.length && homeBanner && topBanner) {
+        const latest = list[list.length - 1];
+
+        homeBanner.style.display = 'block';
+        topBanner.style.display = 'block';
+
+        homeText.textContent = latest.text;
+        topText.textContent = latest.text;
+
+        const authorText = latest.author
+          ? ('Posted by: ' + latest.author)
+          : '';
+
+        homeAuthor.textContent = authorText;
+        topAuthor.textContent = authorText;
+      } else {
+        homeBanner.style.display = 'none';
+        topBanner.style.display = 'none';
+      }
+
       container.querySelectorAll('.remove-ann').forEach(btn=>{
         btn.addEventListener('click', ()=>{
           const idx = Number(btn.getAttribute('data-idx'));
@@ -1141,6 +1196,16 @@ arr.push({
   </script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
 
 
 
