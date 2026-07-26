@@ -190,6 +190,12 @@
     <div id="homeAnnouncementAuthor"
          style="margin-top:8px;font-size:13px;opacity:.85;"></div>
   </div>
+
+  <div id="homeCountdown" style="display:none;max-width:760px;margin:12px auto 20px auto;padding:14px;border-radius:12px;background:linear-gradient(180deg,rgba(220,240,220,.95),rgba(170,210,170,.95));box-shadow:0 8px 20px rgba(0,0,0,.15);color:#1f2d1f;">
+    <div style="font-size:18px;font-weight:900;margin-bottom:6px;">Featured Countdown</div>
+    <div id="homeCountdownTitle"></div>
+    <div id="homeCountdownTime" style="margin-top:6px;font-weight:700;"></div>
+  </div>
   </main>
 
   <!-- DASHBOARD page (separate page) -->
@@ -470,7 +476,7 @@
               <input id="countDate" type="datetime-local" style="width:220px;padding:8px;border-radius:8px;border:1px solid rgba(0,0,0,0.06)" />
             </div>
             <div style="display:flex;gap:8px;margin-top:8px">
-              <button id="addCountdown" class="btn small">Add Countdown</button>
+              <label style="display:flex;align-items:center;gap:6px;"><input id="countFeatured" type="checkbox"> Featured Countdown</label><button id="addCountdown" class="btn small">Add Countdown</button>
               <button id="clearCountdowns" class="btn small">Clear All</button>
             </div>
             <div style="margin-top:12px">
@@ -957,7 +963,17 @@ arr.push({
       const target = document.getElementById('countDate').value;
       if (!title || !target){ alert('Enter title and date'); return; }
       const arr = loadCountdowns();
-      arr.push({title, target});
+      const featured = document.getElementById('countFeatured').checked;
+
+      if (featured) {
+        arr.forEach(c => c.featured = false);
+      }
+
+      arr.push({
+        title,
+        target,
+        featured
+      });
       saveCountdowns(arr);
       document.getElementById('countTitle').value = '';
       document.getElementById('countDate').value = '';
@@ -1184,3 +1200,6 @@ arr.push({
   </script>
 </body>
 </html>
+
+
+
