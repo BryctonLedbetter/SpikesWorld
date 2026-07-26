@@ -1,0 +1,5 @@
+# Spike's World — don't commit data/content, only code
+spike.db
+static/uploads/
+__pycache__/
+*.pyc

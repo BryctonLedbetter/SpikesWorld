@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Spike's World — Admin Login</title>
+  <style>
+    :root{
+      --sand-light:#f4d19b; --clay:#b07a48; --earth:#5a3d24; --earth-dark:#3a2716;
+      --cream:#fff7e8; --muted:#d9c3a5; --good:#2ecc71; --warn:#e67e22;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center;
+      font-family:"Inter","Segoe UI",system-ui,Arial,sans-serif; color:var(--cream);
+      background:
+        linear-gradient(180deg, rgba(58,39,22,0.72), rgba(36,23,8,0.86)),
+        url("{{ url_for('static', filename='desert-bg.jpg') }}");
+      background-size:cover; background-position:center;
+    }
+    .login{
+      width:min(420px,92%); padding:28px;
+      background:linear-gradient(160deg, rgba(210,166,118,0.20), rgba(90,61,36,0.34));
+      border:1px solid rgba(244,209,155,0.3); border-radius:18px;
+      box-shadow:0 24px 60px rgba(0,0,0,0.5); text-align:center;
+    }
+    .login .logo{ font-size:44px; }
+    .login h1{ margin:8px 0 2px; font-size:24px; }
+    .login p{ margin:0 0 18px; color:var(--muted); font-weight:600; }
+    .login input{
+      width:100%; padding:12px 14px; border-radius:12px; font-size:16px;
+      border:1px solid rgba(244,209,155,0.3); background:rgba(0,0,0,0.25);
+      color:var(--cream); font-weight:700; margin-bottom:12px;
+    }
+    .login button{
+      width:100%; padding:12px; border-radius:999px; font-weight:800; font-size:16px;
+      color:var(--cream); cursor:pointer; border:1px solid rgba(244,209,155,0.4);
+      background:linear-gradient(180deg, var(--clay), var(--earth));
+    }
+    .login button:hover{ filter:brightness(1.08); }
+    .msg{ padding:10px; border-radius:10px; margin-bottom:14px; font-weight:700; }
+    .msg.error{ background:rgba(230,126,34,0.2); border:1px solid var(--warn); }
+    .back{ display:block; margin-top:16px; color:var(--muted); font-weight:700; text-decoration:none; }
+    .back:hover{ color:var(--cream); }
+  </style>
+</head>
+<body>
+  <form class="login" method="post" action="{{ url_for('admin_login') }}">
+    <div class="logo">🦎</div>
+    <h1>Spike's World Admin</h1>
+    <p>Enter your password to manage the site</p>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+        <div class="msg {{ category }}">{{ message }}</div>
+      {% endfor %}
+    {% endwith %}
+
+    <input type="password" name="password" placeholder="Password" autofocus autocomplete="current-password" />
+    <button type="submit">Log In</button>
+    <a class="back" href="{{ url_for('home') }}">← Back to Spike's World</a>
+  </form>
+</body>
+</html>

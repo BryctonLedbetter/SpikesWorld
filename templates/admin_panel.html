@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Spike's World — Admin Panel</title>
+  <style>
+    :root{
+      --sand-light:#f4d19b; --clay:#b07a48; --earth:#5a3d24; --earth-dark:#3a2716;
+      --cream:#fff7e8; --muted:#d9c3a5; --good:#2ecc71; --warn:#e67e22;
+      --radius:16px; --gap:18px;
+      --card-bg:linear-gradient(160deg, rgba(210,166,118,0.16), rgba(90,61,36,0.30));
+      --card-border:1px solid rgba(244,209,155,0.25);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; font-family:"Inter","Segoe UI",system-ui,Arial,sans-serif; color:var(--cream);
+      background:
+        linear-gradient(180deg, rgba(58,39,22,0.72), rgba(36,23,8,0.86)),
+        url("{{ url_for('static', filename='desert-bg.jpg') }}");
+      background-size:cover; background-position:center; background-attachment:fixed;
+    }
+    .wrap{ max-width:1000px; margin:0 auto; padding:24px; }
+    .top{ display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:8px; }
+    h1{ margin:0; font-size:30px; }
+    h1 .logo{ margin-right:6px; }
+    .sub{ color:var(--muted); font-weight:600; margin:2px 0 20px; }
+    a.btn, button.btn{
+      display:inline-flex; align-items:center; gap:8px; padding:10px 16px; border-radius:999px;
+      font-weight:800; font-size:14px; color:var(--cream); cursor:pointer;
+      border:1px solid rgba(244,209,155,0.3); background:rgba(0,0,0,0.2); text-decoration:none;
+    }
+    .btn:hover{ background:rgba(244,209,155,0.14); }
+    .btn-accent{ background:linear-gradient(180deg,var(--clay),var(--earth)); }
+    .btn-danger{ background:rgba(200,60,40,0.25); border-color:rgba(200,60,40,0.5); padding:6px 12px; font-size:13px; }
+
+    .card{
+      background:var(--card-bg); border:var(--card-border); border-radius:var(--radius);
+      box-shadow:0 18px 40px rgba(0,0,0,0.35); padding:20px; margin-bottom:var(--gap);
+    }
+    .card h2{ margin:0 0 4px; font-size:20px; display:flex; align-items:center; gap:8px; }
+    .card .hint{ color:var(--muted); font-weight:600; margin:0 0 14px; font-size:14px; }
+
+    label{ display:block; font-weight:800; margin:10px 0 4px; font-size:14px; }
+    input[type=text], textarea, input[type=file]{
+      width:100%; padding:11px 12px; border-radius:10px; font-size:15px;
+      border:1px solid rgba(244,209,155,0.3); background:rgba(0,0,0,0.22);
+      color:var(--cream); font-weight:600; font-family:inherit;
+    }
+    textarea{ min-height:80px; resize:vertical; }
+    .row{ display:flex; gap:12px; flex-wrap:wrap; }
+    .row > div{ flex:1; min-width:140px; }
+    .actions{ margin-top:14px; }
+
+    .msg{ padding:12px 14px; border-radius:12px; margin-bottom:16px; font-weight:800; }
+    .msg.ok{ background:rgba(46,204,113,0.18); border:1px solid var(--good); }
+    .msg.error{ background:rgba(230,126,34,0.20); border:1px solid var(--warn); }
+
+    .list-item{
+      display:flex; align-items:flex-start; justify-content:space-between; gap:12px;
+      padding:12px; border-radius:10px; background:rgba(0,0,0,0.18); margin-top:10px;
+    }
+    .list-item .meta{ color:var(--muted); font-size:12px; font-weight:700; margin-top:4px; }
+
+    .photo-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:12px; margin-top:12px; }
+    .photo-grid figure{ margin:0; background:rgba(0,0,0,0.2); border-radius:12px; overflow:hidden; }
+    .photo-grid img{ width:100%; height:110px; object-fit:cover; display:block; }
+    .photo-grid figcaption{ padding:6px 8px; font-size:12px; color:var(--muted); font-weight:700; }
+    .photo-grid form{ padding:0 8px 8px; }
+    @media (max-width:640px){ .row{ flex-direction:column; } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+
+    <div class="top">
+      <h1><span class="logo">🦎</span> Admin Panel</h1>
+      <div>
+        <a class="btn" href="{{ url_for('home') }}">🏠 View Site</a>
+        <a class="btn btn-accent" href="{{ url_for('admin_logout') }}">Log Out</a>
+      </div>
+    </div>
+    <p class="sub">Everything you change here shows up on Spike's World for everyone. 🦎</p>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+        <div class="msg {{ category }}">{{ message }}</div>
+      {% endfor %}
+    {% endwith %}
+
+    <!-- ============ ANNOUNCEMENTS ============ -->
+    <div class="card">
+      <h2>📣 Announcements</h2>
+      <p class="hint">Post news about Spike. The newest one shows on the homepage.</p>
+      <form method="post" action="{{ url_for('announcement_add') }}">
+        <label>Title</label>
+        <input type="text" name="title" placeholder="e.g. Spike shed his skin today!" />
+        <label>Message</label>
+        <textarea name="body" placeholder="Write your announcement here..."></textarea>
+        <div class="actions"><button class="btn btn-accent" type="submit">➕ Post Announcement</button></div>
+      </form>
+
+      {% for a in announcements %}
+        <div class="list-item">
+          <div>
+            <strong>{{ a["title"] }}</strong>
+            <div>{{ a["body"] }}</div>
+            <div class="meta">{{ a["created_at"] }}</div>
+          </div>
+          <form method="post" action="{{ url_for('announcement_delete', aid=a['id']) }}">
+            <button class="btn btn-danger" type="submit">Delete</button>
+          </form>
+        </div>
+      {% else %}
+        <p class="hint" style="margin-top:12px">No announcements yet.</p>
+      {% endfor %}
+    </div>
+
+    <!-- ============ TANK CONDITION ============ -->
+    <div class="card">
+      <h2>💧 Tank Condition</h2>
+      <p class="hint">Update the temperatures and humidity in Spike's tank.</p>
+      <form method="post" action="{{ url_for('tank_update') }}">
+        <div class="row">
+          <div>
+            <label>Hot side</label>
+            <input type="text" name="hot" value="{{ tank['hot'] if tank else '' }}" placeholder="95°F" />
+          </div>
+          <div>
+            <label>Cool side</label>
+            <input type="text" name="cool" value="{{ tank['cool'] if tank else '' }}" placeholder="80°F" />
+          </div>
+          <div>
+            <label>Humidity</label>
+            <input type="text" name="humidity" value="{{ tank['humidity'] if tank else '' }}" placeholder="35%" />
+          </div>
+        </div>
+        <div class="actions"><button class="btn btn-accent" type="submit">💾 Save Tank Condition</button></div>
+      </form>
+    </div>
+
+    <!-- ============ HEALTH ============ -->
+    <div class="card">
+      <h2>❤️ Spike's Health</h2>
+      <p class="hint">Update Spike's current health status and notes.</p>
+      <form method="post" action="{{ url_for('health_update') }}">
+        <label>Status (short)</label>
+        <input type="text" name="status" value="{{ health['status'] if health else '' }}" placeholder="Perfect" />
+        <label>Notes</label>
+        <textarea name="notes" placeholder="How is Spike doing?">{{ health['notes'] if health else '' }}</textarea>
+        <div class="actions"><button class="btn btn-accent" type="submit">💾 Save Health</button></div>
+      </form>
+    </div>
+
+    <!-- ============ PHOTOS ============ -->
+    <div class="card">
+      <h2>🖼️ Pictures of Spike</h2>
+      <p class="hint">Upload photos. They appear in the homepage gallery.</p>
+      <form method="post" action="{{ url_for('photo_upload') }}" enctype="multipart/form-data">
+        <label>Choose a photo (jpg, png, gif, webp — up to 12 MB)</label>
+        <input type="file" name="photo" accept="image/*" />
+        <label>Caption (optional)</label>
+        <input type="text" name="caption" placeholder="Spike basking in the sun" />
+        <div class="actions"><button class="btn btn-accent" type="submit">⬆️ Upload Photo</button></div>
+      </form>
+
+      <div class="photo-grid">
+        {% for p in photos %}
+          <figure>
+            <img src="{{ url_for('static', filename='uploads/' + p['filename']) }}" alt="{{ p['caption'] }}" />
+            <figcaption>{{ p["caption"] or "No caption" }}</figcaption>
+            <form method="post" action="{{ url_for('photo_delete', pid=p['id']) }}">
+              <button class="btn btn-danger" type="submit" style="width:100%">Delete</button>
+            </form>
+          </figure>
+        {% else %}
+          <p class="hint">No photos uploaded yet.</p>
+        {% endfor %}
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>
