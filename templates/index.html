@@ -729,6 +729,7 @@
         spikeHls = new Hls({ lowLatencyMode: true });
         spikeHls.loadSource(HLS_URL);
         spikeHls.attachMedia(videoEl);
+        spikeHls.on(Hls.Events.MANIFEST_PARSED, () => { videoEl.play().catch(()=>{}); });
         spikeHls.on(Hls.Events.ERROR, (evt, data) => {
           if (data && data.fatal) {
             statusEl.textContent = "Spike's camera is offline right now — check back soon!";
