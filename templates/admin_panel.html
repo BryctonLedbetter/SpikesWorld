@@ -32,6 +32,7 @@
     }
     .btn:hover{ background:rgba(244,209,155,0.14); }
     .btn-accent{ background:linear-gradient(180deg,var(--clay),var(--earth)); }
+    .btn-tutorial{ background:linear-gradient(180deg,#3a7d5a,#255c40); border-color:rgba(46,204,113,0.5); }
     .btn-danger{ background:rgba(200,60,40,0.25); border-color:rgba(200,60,40,0.5); padding:6px 12px; font-size:13px; }
 
     .card{
@@ -68,6 +69,29 @@
     .photo-grid figcaption{ padding:6px 8px; font-size:12px; color:var(--muted); font-weight:700; }
     .photo-grid form{ padding:0 8px 8px; }
     @media (max-width:640px){ .row{ flex-direction:column; } }
+
+    /* ===== Tutorial modal ===== */
+    #tutorialBackdrop{
+      position:fixed; inset:0; display:none; align-items:center; justify-content:center;
+      background:rgba(0,0,0,0.75); z-index:1000; padding:20px;
+    }
+    #tutorialBackdrop .modal{
+      background:#241708; border:1px solid rgba(244,209,155,0.35); border-radius:18px;
+      box-shadow:0 30px 80px rgba(0,0,0,0.7); max-width:720px; width:100%;
+      max-height:88vh; overflow:auto; padding:26px;
+    }
+    #tutorialBackdrop h2{ margin:0 0 6px; font-size:24px; }
+    #tutorialBackdrop .step{
+      background:rgba(255,255,255,0.03); border:1px solid rgba(244,209,155,0.18);
+      border-radius:12px; padding:14px 16px; margin-top:14px;
+    }
+    #tutorialBackdrop .step h3{ margin:0 0 6px; font-size:17px; display:flex; align-items:center; gap:8px; }
+    #tutorialBackdrop .step p{ margin:0; color:var(--muted); font-weight:600; line-height:1.5; }
+    #tutorialBackdrop .tip{
+      margin-top:16px; padding:12px 14px; border-radius:12px;
+      background:rgba(46,204,113,0.12); border:1px solid rgba(46,204,113,0.4);
+      font-weight:700; line-height:1.5;
+    }
   </style>
 </head>
 <body>
@@ -76,6 +100,7 @@
     <div class="top">
       <h1><span class="logo">🦎</span> Admin Panel</h1>
       <div>
+        <button class="btn btn-tutorial" id="openTutorial">📖 Tutorial</button>
         <a class="btn" href="{{ url_for('home') }}">🏠 View Site</a>
         <a class="btn btn-accent" href="{{ url_for('admin_logout') }}">Log Out</a>
       </div>
@@ -180,5 +205,59 @@
     </div>
 
   </div>
+
+  <!-- ============ TUTORIAL MODAL ============ -->
+  <div id="tutorialBackdrop">
+    <div class="modal">
+      <h2>📖 How to Run Spike's World</h2>
+      <p class="hint">Hey Brycton! This is your control room. 🦎 Here's everything you can do — anything you change here shows up on the website for everyone who visits!</p>
+
+      <div class="step">
+        <h3>📣 Post an Announcement</h3>
+        <p>Got news about Spike? Type a <strong>Title</strong> and a <strong>Message</strong>, then click <strong>Post Announcement</strong>. The newest one shows up on the homepage. You can delete old ones with the Delete button.</p>
+      </div>
+
+      <div class="step">
+        <h3>💧 Update the Tank Condition</h3>
+        <p>Change the <strong>Hot side</strong>, <strong>Cool side</strong>, and <strong>Humidity</strong> boxes to match Spike's tank, then click <strong>Save Tank Condition</strong>. You can type it however you like, e.g. "95°F" or "35%".</p>
+      </div>
+
+      <div class="step">
+        <h3>❤️ Update Spike's Health</h3>
+        <p>Put a short <strong>Status</strong> (like "Perfect" or "Shedding") and add <strong>Notes</strong> about how he's doing. Click <strong>Save Health</strong> and it updates the health card on the homepage.</p>
+      </div>
+
+      <div class="step">
+        <h3>🖼️ Upload Photos</h3>
+        <p>Click <strong>Choose a photo</strong>, pick a picture of Spike (jpg, png, gif, or webp, up to 12 MB), add a <strong>Caption</strong> if you want, then click <strong>Upload Photo</strong>. Visitors see them in the "Pictures of Spike" gallery. Delete any photo with its Delete button.</p>
+      </div>
+
+      <div class="step">
+        <h3>📡 The Live Camera</h3>
+        <p>The "View Spike Live" card streams your camera automatically — you don't need to do anything here. When the camera is on, the dot turns green and says "Live"!</p>
+      </div>
+
+      <div class="step">
+        <h3>🏠 See Your Changes</h3>
+        <p>Click <strong>View Site</strong> (top right) anytime to see the real website. The homepage updates on its own every 30 seconds, or just refresh the page.</p>
+      </div>
+
+      <div class="tip">
+        🔒 <strong>Keep your password secret!</strong> Only you can log in here. When you're done, click <strong>Log Out</strong> — especially on a shared computer.
+      </div>
+
+      <div class="actions" style="text-align:right; margin-top:18px">
+        <button class="btn btn-accent" id="closeTutorial">Got it! 🦎</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    var tb = document.getElementById('tutorialBackdrop');
+    document.getElementById('openTutorial').addEventListener('click', function(){ tb.style.display='flex'; });
+    document.getElementById('closeTutorial').addEventListener('click', function(){ tb.style.display='none'; });
+    tb.addEventListener('click', function(e){ if(e.target === tb) tb.style.display='none'; });
+    document.addEventListener('keydown', function(e){ if(e.key==='Escape') tb.style.display='none'; });
+  </script>
 </body>
 </html>
