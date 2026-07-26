@@ -365,15 +365,12 @@
   <!-- Live modal -->
   <div id="liveBackdrop" class="backdrop" aria-hidden="true">
     <div class="modal">
-      <div style="display:flex;gap:12px;align-items:center">
-        <img id="liveImg" src="{{ url_for('static', filename='Spike2.jpg') }}" alt="Spike" style="width:220px;height:220px;border-radius:12px;object-fit:cover">
-        <div style="flex:1">
-          <h3>View Spike Live</h3>
-          <p style="font-weight:900;margin-top:8px" id="liveText">Sorry u can't view me live right now!</p>
-          <p style="margin-top:8px;color:var(--muted)">Check back later or view current photos from the dashboard.</p>
-          <div style="text-align:right;margin-top:12px"><button id="closeLive" class="btn small">Close</button></div>
-        </div>
+      <h3>View Spike Live 🦎</h3>
+      <div style="margin-top:12px">
+        <video id="spikeLive" autoplay muted playsinline controls style="width:100%;border-radius:8px;background:#000"></video>
       </div>
+      <p id="liveStatus" style="font-weight:900;margin-top:8px;color:var(--muted)">Connecting…</p>
+      <div style="text-align:right;margin-top:12px"><button id="closeLive" class="btn small">Close</button></div>
     </div>
   </div>
 
@@ -711,16 +708,48 @@
     const playSmall = document.getElementById('playSmall');
     if (playSmall) playSmall.addEventListener('click', openVideoModal);
 
-    /* ---------- Live modal ---------- */
+    /* ---------- Live modal (WebRTC / WHEP) ---------- */
     const liveBackdrop = document.getElementById('liveBackdrop');
-    function openLiveModalFromCard(card){
-      const detailsImg = card.querySelector('.card-details') ? card.querySelector('.card-details').getAttribute('data-img') : MASCOT;
-      const detailsText = card.querySelector('.card-details') ? card.querySelector('.card-details').getAttribute('data-text') : "Sorry u can't view me live right now!";
-      document.getElementById('liveImg').src = detailsImg || MASCOT;
-      document.getElementById('liveText').textContent = detailsText || "Sorry u can't view me live right now!";
-      liveBackdrop.classList.add('show');
+    const WHEP_URL = 'https://brycton.kingscorner.us/live/pet-cam/whep';
+    let spikePC = null;
+
+    async function startSpikeLive(){
+      stopSpikeLive();
+      const statusEl = document.getElementById('liveStatus');
+      const videoEl = document.getElementById('spikeLive');
+      statusEl.textContent = 'Connecting…';
+      spikePC = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
+      spikePC.addTransceiver('video', { direction: 'recvonly' });
+      spikePC.addTransceiver('audio', { direction: 'recvonly' });
+      spikePC.ontrack = (e) => { videoEl.srcObject = e.streams[0]; statusEl.textContent = 'Live'; };
+      spikePC.onconnectionstatechange = () => {
+        if (spikePC && (spikePC.connectionState === 'failed' || spikePC.connectionState === 'disconnected')){
+          statusEl.textContent = "Spike's camera dropped — try reopening.";
+        }
+      };
+      try {
+        const offer = await spikePC.createOffer();
+        await spikePC.setLocalDescription(offer);
+        const res = await fetch(WHEP_URL, { method: 'POST', headers: { 'Content-Type': 'application/sdp' }, body: offer.sdp });
+        if (!res.ok) throw new Error('signaling ' + res.status);
+        const answer = await res.text();
+        await spikePC.setRemoteDescription({ type: 'answer', sdp: answer });
+      } catch (err) {
+        statusEl.textContent = "Spike's camera is offline right now — check back soon!";
+      }
     }
-    document.getElementById('closeLive').addEventListener('click', ()=> { liveBackdrop.classList.remove('show'); });
+
+    function stopSpikeLive(){
+      if (spikePC){ try { spikePC.close(); } catch(e){} spikePC = null; }
+      const v = document.getElementById('spikeLive');
+      if (v) v.srcObject = null;
+    }
+
+    function openLiveModalFromCard(card){
+      liveBackdrop.classList.add('show');
+      startSpikeLive();
+    }
+    document.getElementById('closeLive').addEventListener('click', ()=> { liveBackdrop.classList.remove('show'); stopSpikeLive(); });
 
     /* ---------- Admin user & content store (localStorage) ---------- */
     const LS_USERS_KEY = 'spike_admin_users_v1';
@@ -1199,7 +1228,7 @@ arr.push({
         if (document.getElementById('jokeOverlay').classList.contains('show')) document.getElementById('jokeOverlay').classList.remove('show');
         if (viewerBackdrop.classList.contains('show')) viewerBackdrop.classList.remove('show');
         if (videoBackdrop.classList.contains('show')) videoBackdrop.classList.remove('show');
-        if (liveBackdrop.classList.contains('show')) liveBackdrop.classList.remove('show');
+        if (liveBackdrop.classList.contains('show')) { liveBackdrop.classList.remove('show'); stopSpikeLive(); }
       }
     });
 
