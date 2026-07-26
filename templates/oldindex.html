@@ -1,0 +1,1279 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Spike's World — Home, Dashboard & Admin</title>
+  <style>
+    :root{
+      --desert-1:#d2a676; --desert-2:#b07a48; --desert-3:#f4d19b; --desert-4:#b07a48;
+      --text:#2b1a10; --muted:#6b4f36; --shadow:0 18px 40px rgba(0,0,0,0.35);
+      --enter-bg: linear-gradient(180deg,var(--desert-3),var(--desert-2));
+      --card-top: rgba(210,150,90,0.96); --card-bottom: rgba(176,122,72,0.96);
+      --accent:#b07a48; --glass: rgba(255,255,255,0.04);
+    }
+
+    /* ---------- Global fixes to remove black line and overflow ---------- */
+    *{box-sizing:border-box}
+    html,body{
+      height:100%;
+      margin:0;
+      width:100%;
+      min-width:0;
+      overflow-x:hidden; /* KEY: prevent horizontal scroll / black line */
+      font-family:Inter,system-ui,Arial,sans-serif;
+      background:
+        radial-gradient(circle at 50% 40%, rgba(244,209,155,0.12) 0%, rgba(244,209,155,0.06) 8%, transparent 18%),
+        radial-gradient(circle at 20% 10%, var(--desert-3), var(--desert-2) 70%);
+      color:var(--text);
+      -webkit-font-smoothing:antialiased;
+    }
+    img, video { max-width:100%; height:auto; display:block; }
+
+    /* ---------- Falling layer (clipped) ---------- */
+    .fall-layer{
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      z-index:40;
+      overflow:hidden; /* clip falling items to viewport */
+    }
+    .baby{
+      position:absolute;
+      background-size:cover;
+      background-position:center;
+      border-radius:10px;
+      filter:drop-shadow(0 8px 18px rgba(0,0,0,0.35));
+      will-change: transform, opacity;
+      left:0;
+      top:-160px;
+      max-width:18vw; /* prevents very wide tiles on small screens */
+      max-height:18vw;
+    }
+    @keyframes fallAnim{
+      0%{ transform: translateY(-120px) rotate(0deg); opacity:1; }
+      100%{ transform: translateY(110vh) rotate(360deg); opacity:0; }
+    }
+
+    /* ---------- Page system (home, dashboard, admin) ---------- */
+    .page{display:none;min-height:100vh;width:100%}
+    .page.active{display:block}
+
+    /* ---------- Shared UI ---------- */
+    .btn{padding:10px 16px;border-radius:999px;background:var(--enter-bg);color:var(--text);font-weight:900;border:1px solid rgba(0,0,0,0.06);cursor:pointer}
+    .btn.small{padding:8px 10px;border-radius:10px;font-size:13px}
+    .card{border-radius:12px;padding:14px;background:linear-gradient(180deg, rgba(255,250,240,0.06), rgba(0,0,0,0.02));box-shadow:0 12px 30px rgba(0,0,0,0.12)}
+    .muted{color:var(--muted);font-weight:800}
+
+    /* ---------- Home / Hero ---------- */
+    .home-hero{max-width:1200px;margin:28px auto;padding:20px;border-radius:18px;height:320px;display:flex;gap:18px;align-items:center;justify-content:center;box-shadow:0 30px 80px rgba(0,0,0,0.35);background-image:url('/static/Spike2.jpg');background-size:cover;background-position:center}
+    .hero-left{width:200px;height:200px;border-radius:12px;background-image:url('/static/Spike2.jpg');background-size:cover;background-position:center}
+    .hero-right{text-align:center}
+    .hero-right h2{margin:0;font-size:24px;color:var(--desert-3);font-weight:900}
+    .hero-right p{margin:6px 0 0 0;font-weight:800;color:rgba(43,26,16,0.95)}
+    .dev-credits{margin-top:12px;width:100%;max-width:760px;display:flex;gap:12px;align-items:center;justify-content:center;padding:12px;border-radius:14px;background:var(--glass);border:2px solid rgba(255,255,255,0.02);box-shadow:0 18px 40px rgba(0,0,0,0.12)}
+    .dev-main{font-family:Georgia,serif;font-weight:900;color:var(--desert-2);padding:8px 12px;border-radius:10px;background:linear-gradient(180deg, rgba(255,245,220,0.04), rgba(255,235,190,0.02))}
+
+    /* ---------- Dashboard (centered large area) ---------- */
+    .dashboard-page{display:flex;justify-content:center;padding:40px 20px;min-height:100vh}
+    .dashboard-inner{width:min(1100px,96%);background: linear-gradient(180deg,var(--card-top),var(--card-bottom));border-radius:18px;padding:28px;box-shadow:var(--shadow)}
+    .dash-top{display:flex;justify-content:space-between;align-items:center;gap:12px}
+    .dash-title{font-size:26px;font-weight:900;color:var(--desert-3)}
+    .controls-row{display:flex;justify-content:space-between;align-items:center;margin-top:18px;gap:12px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px;margin-top:18px}
+
+    /* status dot hover ring */
+    .status-row{display:flex;gap:12px;align-items:center;margin-top:12px}
+    .status-dot{width:18px;height:18px;border-radius:50%;border:2px solid rgba(0,0,0,0.06);box-shadow:0 6px 18px rgba(0,0,0,0.12);position:relative}
+    .status-dot::after{content:"";position:absolute;inset:0;border-radius:50%;pointer-events:none;opacity:0;transform:scale(.9);transition:opacity .14s, transform .14s}
+    .card:hover .status-dot::after{opacity:1;transform:scale(1.35)}
+    .dot-live{background:linear-gradient(180deg,#ffd9b0,#ffb86a)}
+    .dot-live::after{box-shadow:0 0 0 6px rgba(255,184,106,0.18)}
+    .dot-health{background:#d4af37}
+    .dot-health::after{box-shadow:0 0 0 6px rgba(212,175,55,0.18)}
+    .dot-age{background:#ff8c42}
+    .dot-age::after{box-shadow:0 0 0 6px rgba(255,140,66,0.18)}
+    .dot-info{background:#f4d19b}
+    .dot-info::after{box-shadow:0 0 0 6px rgba(244,209,155,0.18)}
+    .dot-owners{background:linear-gradient(180deg,#fff7d6,#b07a48)}
+    .dot-owners::after{box-shadow:0 0 0 6px rgba(176,122,72,0.18)}
+    .dot-good{background:#2ecc71}
+    .dot-good::after{box-shadow:0 0 0 6px rgba(46,204,113,0.18)}
+
+    /* ---------- Modals & viewer ---------- */
+    .backdrop{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.55);z-index:900;padding:20px}
+    .backdrop.show{display:flex}
+    .modal{max-width:980px;margin:auto;background:linear-gradient(180deg, rgba(210,150,90,0.98), rgba(176,122,72,0.98));padding:16px;border-radius:12px;color:var(--text);box-shadow:var(--shadow)}
+
+    /* ---------- Login modal (styled) ---------- */
+    .login-backdrop{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:linear-gradient(180deg, rgba(0,0,0,0.45), rgba(0,0,0,0.6));z-index:1000;padding:20px}
+    .login-card{width:420px;border-radius:14px;padding:18px;background:linear-gradient(180deg, rgba(210,150,90,1), rgba(176,122,72,1));box-shadow:0 30px 80px rgba(0,0,0,0.6);border:1px solid rgba(0,0,0,0.08);display:grid;grid-template-columns:96px 1fr;gap:12px;align-items:center}
+    .login-avatar{width:96px;height:96px;border-radius:12px;background-image:url('/static/Spike2.jpg');background-size:cover;background-position:center;border:4px solid rgba(255,255,255,0.03);box-shadow:0 8px 30px rgba(0,0,0,0.3)}
+    .login-form{grid-column:1 / -1;display:flex;flex-direction:column;gap:10px;margin-top:6px}
+    .login-form input{padding:10px;border-radius:10px;border:1px solid rgba(0,0,0,0.06);background:#f4e0c0;color:var(--text);font-weight:800}
+
+    /* ---------- Admin page layout ---------- */
+    .admin-page{max-width:1200px;margin:28px auto;padding:20px;border-radius:14px;background:linear-gradient(180deg,var(--card-top),var(--card-bottom));box-shadow:var(--shadow)}
+    .admin-grid{display:grid;grid-template-columns:260px 1fr;gap:18px}
+    .sidebar{background:var(--glass);padding:12px;border-radius:10px;border:1px solid rgba(0,0,0,0.04)}
+    .nav-item{padding:10px;border-radius:8px;cursor:pointer;font-weight:900;color:var(--text);display:flex;justify-content:space-between;align-items:center}
+    .nav-item.active{background:linear-gradient(90deg, rgba(255,255,255,0.02), rgba(0,0,0,0.02));box-shadow:inset 0 1px 0 rgba(255,255,255,0.02)}
+    .main-admin{background:transparent;padding:6px}
+    .editor{display:grid;grid-template-columns:1fr 360px;gap:12px}
+    .panel{background:var(--glass);padding:12px;border-radius:10px;border:1px solid rgba(0,0,0,0.04)}
+    .editor textarea{width:100%;min-height:120px;padding:10px;border-radius:8px;border:1px solid rgba(0,0,0,0.06);background:#f4e0c0;color:var(--text);font-weight:800}
+    .preview{background:linear-gradient(180deg, rgba(210,150,90,1), rgba(176,122,72,1));padding:12px;border-radius:10px;border:1px solid rgba(0,0,0,0.04)}
+    .user-list{margin-top:8px;max-height:220px;overflow:auto;padding:8px;border-radius:8px;border:1px solid rgba(0,0,0,0.06);background:rgba(255,255,255,0.02)}
+    .user-item{display:flex;justify-content:space-between;align-items:center;padding:6px 8px;border-radius:6px;margin-bottom:6px;background:rgba(0,0,0,0.02)}
+
+    /* announcements, countdowns, people */
+    .ann-list{max-height:180px;overflow:auto;padding:8px;border-radius:8px;border:1px solid rgba(0,0,0,0.06);background:rgba(255,255,255,0.02)}
+    .ann-item{padding:8px;border-radius:8px;margin-bottom:8px;background:rgba(0,0,0,0.02);display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+    .countdown-list{max-height:180px;overflow:auto;padding:8px;border-radius:8px;border:1px solid rgba(0,0,0,0.06);background:rgba(255,255,255,0.02)}
+    .count-item{padding:8px;border-radius:8px;margin-bottom:8px;background:rgba(0,0,0,0.02);display:flex;justify-content:space-between;align-items:center;gap:8px}
+    .people-list{display:grid;grid-template-columns:1fr 1fr;gap:8px;max-height:260px;overflow:auto;padding:8px;border-radius:8px;border:1px solid rgba(0,0,0,0.06);background:rgba(255,255,255,0.02)}
+    .person-card{display:flex;gap:8px;align-items:center;padding:8px;border-radius:8px;background:rgba(0,0,0,0.02)}
+    .person-card img{width:56px;height:56px;border-radius:8px;object-fit:cover}
+
+    /* unauthorized */
+    .unauth-backdrop{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.9);z-index:1000;padding:20px}
+    .unauth-card{max-width:760px;padding:18px;border-radius:12px;background:#111;color:#fff;text-align:center}
+    .unauth-card img{max-width:100%;max-height:70vh;object-fit:contain;border-radius:8px;margin-bottom:12px}
+
+    @media (max-width:980px){
+      .admin-grid{grid-template-columns:1fr}
+      .editor{grid-template-columns:1fr}
+      .login-card{width:92%;grid-template-columns:84px 1fr}
+      .people-list{grid-template-columns:1fr}
+    }
+      /* live status pulse */
+    #liveDot.is-live{ background:#2ecc71; animation: livePulse 1.6s ease-in-out infinite; }
+    #liveDot.is-off{ background:#9a8b78; animation:none; }
+    @keyframes livePulse{
+      0%   { box-shadow:0 0 0 0 rgba(46,204,113,0.55); }
+      70%  { box-shadow:0 0 0 10px rgba(46,204,113,0); }
+      100% { box-shadow:0 0 0 0 rgba(46,204,113,0); }
+    }
+</style>
+  <script type="module" src="{{ url_for('static', filename='video-stream.js') }}"></script>
+</head>
+<body>
+
+  <div id="siteAnnouncement"
+       style="display:none;padding:12px;text-align:center;font-weight:900;background:#d4af37;color:#2b1a10;border-bottom:3px solid #b07a48;">
+    <span id="siteAnnouncementText"></span>
+  </div>
+
+  <!-- Falling tiles -->
+  <div id="fallLayer" class="fall-layer" aria-hidden="true"></div>
+
+  <!-- HOME page -->
+  <main id="homePage" class="page active" role="main" aria-label="Home">
+    <section class="home-hero" role="region" aria-label="Spike hero">
+      <div class="hero-left" aria-hidden="true"></div>
+      <div class="hero-right">
+        <h2>Welcome to Spike's World</h2>
+        <p>Follow Spike's adventures, health updates, and memories.</p>
+
+        <div style="margin-top:12px;display:flex;gap:12px;justify-content:center;align-items:center">
+          <button id="enterBtn" class="btn" aria-controls="dashboardPage">ENTER SPIKE'S WORLD</button>
+          <button id="toggleFall" class="btn small">Stop falling spikes</button>
+        </div>
+
+        <div class="dev-credits" aria-hidden="false">
+          <div class="dev-main">Brycton | Main Developer / Creator</div>
+          <div class="dev-pill">Uncle Stephen | Idea giver · Teacher · Helps with ideas & issues</div>
+          <div id="adminLink" class="admin-link nav-item" title="Spikes Owner | Developers only" style="margin-left:8px">Spikes Owner | Developers only</div>
+        </div>
+      </div>
+    </section>
+
+  <div id="homeAnnouncement"
+       style="display:none;max-width:760px;margin:12px auto 20px auto;padding:14px;border-radius:12px;background:linear-gradient(180deg,rgba(230,200,160,.95),rgba(190,140,90,.95));box-shadow:0 8px 20px rgba(0,0,0,.15);color:#2b1a10;">
+    <div style="font-size:18px;font-weight:900;margin-bottom:6px;">
+      Current Announcement
+    </div>
+
+    <div id="homeAnnouncementText"></div>
+
+    <div id="homeAnnouncementAuthor"
+         style="margin-top:8px;font-size:13px;opacity:.85;"></div>
+  </div>
+
+  <div id="homeCountdown" style="display:none;max-width:760px;margin:12px auto 20px auto;padding:14px;border-radius:12px;background:linear-gradient(180deg,rgba(220,240,220,.95),rgba(170,210,170,.95));box-shadow:0 8px 20px rgba(0,0,0,.15);color:#1f2d1f;">
+    <div style="font-size:18px;font-weight:900;margin-bottom:6px;">Featured Countdown</div>
+    <div id="homeCountdownTitle"></div>
+    <div id="homeCountdownTime" style="margin-top:6px;font-weight:700;"></div>
+  </div>
+  </main>
+
+  <!-- DASHBOARD page (separate page) -->
+  <main id="dashboardPage" class="page" role="main" aria-label="Dashboard">
+    <div class="dashboard-page">
+      <div class="dashboard-inner" role="document">
+        <div class="dash-top">
+          <div>
+            <div class="dash-title">Dashboard</div>
+            <div class="dash-sub">Spike''s live status, health, tank and more</div>
+
+<div id="dashboardTopAnnouncement"
+     style="display:none;margin-top:12px;padding:14px;border-radius:12px;background:linear-gradient(180deg,rgba(230,200,160,.95),rgba(190,140,90,.95));box-shadow:0 8px 20px rgba(0,0,0,.15);color:#2b1a10;">
+
+  <div style="font-size:18px;font-weight:900;margin-bottom:6px;">
+    Current Announcement
+  </div>
+
+  <div id="dashboardTopAnnouncementText"></div>
+
+  <div id="dashboardTopAnnouncementAuthor"
+       style="margin-top:8px;font-size:13px;opacity:.85;"></div>
+
+</div>
+
+<div id="dashboardTopCountdown"
+     style="display:none;margin-top:12px;padding:14px;border-radius:12px;background:linear-gradient(180deg,rgba(220,240,220,.95),rgba(170,210,170,.95));box-shadow:0 8px 20px rgba(0,0,0,.15);color:#1f2d1f;">
+
+  <div style="font-size:18px;font-weight:900;margin-bottom:6px;">
+    Featured Countdown
+  </div>
+
+  <div id="dashboardTopCountdownTitle"></div>
+  <div id="dashboardTopCountdownTime" style="margin-top:6px;font-weight:700;"></div>
+
+</div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <button id="backHomeBtn" class="btn small">← Home</button>
+          </div>
+        </div>
+
+        <div class="controls-row">
+          <div class="left">
+            <button id="dashboardJokeBtn" class="btn small">SPIKE'S JOKE OF THE DAY</button>
+          </div>
+          <div class="right">
+            <button id="picturesBtn" class="btn small">PICTURES OF SPIKE</button>
+          </div>
+        </div>
+
+        <div class="grid" role="list" aria-label="Dashboard cards">
+          <article id="card-thanks" class="card thanks" tabindex="0" aria-label="Thank you video">
+            <h3>Thank you guys... (Spike & Brycton)</h3>
+            <div class="card-summary">Short video — click Play to watch.</div>
+            <div style="margin-top:10px;display:flex;gap:8px">
+              <button id="playSmall" class="btn small">Play</button>
+              <button id="openVideoModal" class="btn small">Open Larger</button>
+            </div>
+            <div class="card-details" data-text="Thank you everyone..." style="display:none"></div>
+          </article>
+
+          <div id="card-live" class="card live" tabindex="0" aria-label="View Spike Live">
+            <h3>View Spike Live</h3>
+            <div class="card-summary">Live stream status</div>
+            <div class="status-row">
+              <span id="liveDot" class="status-dot dot-live" aria-hidden="true"></span>
+              <span id="liveLabel" class="status-label">Unavailable</span>
+            </div>
+            <div class="card-details" data-img="/static/Spike2.jpg" data-text="Sorry u can't view me live right now!" style="display:none"></div>
+          </div>
+
+          <div id="card-health" class="card health" tabindex="0" aria-label="Health">
+            <h3>Spike’s Health Condition</h3>
+            <div class="card-summary">Current health summary</div>
+            <div class="status-row">
+              <span class="status-dot dot-health" aria-hidden="true"></span>
+              <span class="status-label">Perfect</span>
+            </div>
+            <div id="healthDetails" class="card-details" data-text="Spike is currently being treated perfect. He is eating well, very active, has no diseases. His tank is cleaned when needed and his water is changed daily." style="display:none"></div>
+          </div>
+
+          <div id="card-age" class="card age" tabindex="0" aria-label="Age">
+            <h3>How Old Spike Is</h3>
+            <div class="card-summary">Age tracking</div>
+            <div class="status-row">
+              <span class="status-dot dot-age" aria-hidden="true"></span>
+              <span class="status-label">Baby</span>
+            </div>
+            <div id="ageDetails" class="card-details" data-text="Spike is currently a baby bearded dragon. That is all the information we currently have at the moment; we will try to figure out more." style="display:none"></div>
+          </div>
+
+          <div id="card-more" class="card more" tabindex="0" aria-label="More info">
+            <h3>More Info About Spike</h3>
+            <div class="card-summary">Personality, diet, and care</div>
+            <div class="status-row">
+              <span class="status-dot dot-info" aria-hidden="true"></span>
+              <span class="status-label">Info</span>
+            </div>
+            <div id="moreDetails" class="card-details" data-text="Spike is a very loving creature. When first meeting you he may be scared, shy, and unsure — like he was with his caretakers — but he will learn to grow on you and not be afraid. Spike loves to eat when he can and is currently only a baby." style="display:none"></div>
+          </div>
+
+          <div id="card-owners" class="card owners" tabindex="0" aria-label="Caretakers">
+            <h3>Spike's Caretakers</h3>
+            <div class="card-summary">Main caretaker and helpers</div>
+            <div class="status-row">
+              <span class="status-dot dot-owners" aria-hidden="true"></span>
+              <span class="status-label">Brycton + Family</span>
+            </div>
+            <div id="ownersDetails" class="card-details" data-text="Spike's main caretaker / Owner | Brycton  - Helpers, Backups | Uncle Stephen | Aunt Michelle." style="display:none"></div>
+          </div>
+
+          <div id="card-tank" class="card tank" tabindex="0" aria-label="Tank">
+            <h3>Spike’s Tank Current Condition</h3>
+            <div class="card-summary">Temperature and humidity</div>
+            <div class="status-row">
+              <span class="status-dot dot-good" aria-hidden="true"></span>
+              <span class="status-label">Good</span>
+            </div>
+            <div class="card-details" data-text="Hot side: 83°F. Cool side: 72°F. Humidity: Hot 33% / Cool 43%." style="display:none"></div>
+          </div>
+        </div>
+
+        <!-- Dashboard previews removed -->
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- JOKE / DETAILS modal -->
+  <div id="jokeOverlay" class="backdrop" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true">
+      <div style="display:flex;gap:12px;align-items:flex-start">
+        <img id="jokeImg" src="{{ url_for('static', filename='Spike2.jpg') }}" alt="Spike" style="width:160px;height:160px;border-radius:12px;object-fit:cover">
+        <div style="flex:1">
+          <h3 id="jokeTitle">Spike's Joke of the Day</h3>
+          <p id="jokeText" style="font-weight:900;margin-top:8px">Loading joke...</p>
+          <div style="text-align:right;margin-top:12px"><button id="closeJoke" class="btn small">Close</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Viewer modal -->
+  <div id="viewerBackdrop" class="backdrop" aria-hidden="true">
+    <div class="modal">
+      <h3 id="viewerTitle">Photo</h3>
+      <div style="margin-top:12px"><img id="viewerImg" src="" alt="" style="width:100%;max-height:70vh;object-fit:contain;border-radius:8px;object-fit:cover"></div>
+      <div style="display:flex;gap:8px;justify-content:center;margin-top:12px">
+        <button id="viewerPrev" class="btn small">Prev</button>
+        <button id="viewerNext" class="btn small">Next</button>
+        <button id="viewerClose" class="btn small">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Video modal -->
+  <div id="videoBackdrop" class="backdrop" aria-hidden="true">
+    <div class="modal">
+      <h3 id="videoTitle">Thank you guys... (Spike & Brycton)</h3>
+      <div style="margin-top:12px"><video id="modalVideo" controls style="width:100%;max-height:70vh;object-fit:contain;border-radius:8px" poster="{{ url_for('static', filename='Spike2.jpg') }}"><source src="{{ url_for('static', filename='spike_brycton_thanks.mp4') }}" type="video/mp4"></video></div>
+      <div style="text-align:right;margin-top:12px"><button id="closeVideo" class="btn small">Close</button></div>
+    </div>
+  </div>
+
+  <!-- Live modal -->
+  <div id="liveBackdrop" class="backdrop" aria-hidden="true">
+    <div class="modal">
+      <h3>View Spike Live 🦎</h3>
+      <div style="margin-top:12px">
+        <div id="spikeLiveHolder" style="width:100%;min-height:320px;border-radius:8px;background:#000;overflow:hidden"></div>
+      </div>
+      <p id="liveStatus" style="font-weight:900;margin-top:8px;color:var(--muted)">Connecting…</p>
+      <div style="text-align:right;margin-top:12px"><button id="closeLive" class="btn small">Close</button></div>
+    </div>
+  </div>
+
+  <!-- LOGIN modal -->
+  <div id="loginBackdrop" class="login-backdrop" aria-hidden="true">
+    <div class="login-card" role="dialog" aria-modal="true" aria-label="Admin login">
+      <div class="login-avatar" aria-hidden="true"></div>
+      <div class="login-head">
+        <h3>Admin Login</h3>
+        <p class="muted">Sign in to manage site content, announcements, countdowns, images and users</p>
+      </div>
+
+      <div class="login-form">
+        <input id="loginUser" type="text" placeholder="Username" autocomplete="username" />
+        <input id="loginPass" type="password" placeholder="Password" autocomplete="current-password" />
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <label style="font-size:13px;color:var(--muted)"><input id="rememberMe" type="checkbox" /> Remember me</label>
+          <div style="display:flex;gap:8px">
+            <button id="loginCancel" class="btn small">Cancel</button>
+            <button id="loginSubmit" class="btn small">Login</button>
+          </div>
+        </div>
+        <div class="muted" style="font-size:12px;margin-top:6px">Only approved developers can access this panel. Unauthorized attempts will be blocked.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- UNAUTHORIZED overlay -->
+  <div id="unauthBackdrop" class="unauth-backdrop" aria-hidden="true">
+    <div class="unauth-card">
+      <img src="{{ url_for('static', filename='Spike5.jpg') }}" alt="Not allowed" />
+      <h2>U ARE NOT ALLOWED IN HERE WITH US.</h2>
+      <p>ENJOY MY WEBSITE WITHOUT CONTROLS!</p>
+      <div style="margin-top:12px"><button id="unauthClose" class="btn small">Close</button></div>
+    </div>
+  </div>
+
+  <!-- ADMIN page -->
+  <main id="adminPage" class="page" role="main" aria-label="Admin">
+    <div class="admin-page" style="display:none">
+      <div class="admin-grid">
+        <aside class="sidebar card">
+          <h4>Admin Controls</h4>
+          <div id="navContent" class="nav-item active">Content Editor</div>
+          <div id="navAnnouncements" class="nav-item">Announcements</div>
+          <div id="navCountdowns" class="nav-item">Countdowns</div>
+          <div id="navPeople" class="nav-item">People & Photos</div>
+          <div id="navUsers" class="nav-item">Users</div>
+          <div style="margin-top:12px;display:flex;gap:8px">
+            <button id="adminLogout" class="btn small">Logout</button>
+            <button id="adminBack" class="btn small">Back</button>
+          </div>
+        </aside>
+
+        <section class="main-admin">
+          <!-- CONTENT -->
+          <div id="panelContent" class="panel" style="margin-bottom:12px">
+            <h4>Content Editor</h4>
+            <label class="muted" style="margin-top:8px">Health details</label>
+            <textarea id="adminHealth"></textarea>
+            <button id="saveHealth" class="btn small" style="margin-top:8px">Save</button>
+
+            <label class="muted" style="margin-top:12px">Age details</label>
+            <textarea id="adminAge"></textarea>
+            <button id="saveAge" class="btn small" style="margin-top:8px">Save</button>
+
+            <label class="muted" style="margin-top:12px">More info</label>
+            <textarea id="adminMore"></textarea>
+            <button id="saveMore" class="btn small" style="margin-top:8px">Save</button>
+
+            <label class="muted" style="margin-top:12px">Caretakers text</label>
+            <textarea id="adminOwners"></textarea>
+            <button id="saveOwners" class="btn small" style="margin-top:8px">Save</button>
+          </div>
+
+          <!-- ANNOUNCEMENTS -->
+          <div id="panelAnnouncements" class="panel" style="display:none;margin-bottom:12px">
+            <h4>Announcements</h4>
+            <div style="display:flex;gap:8px;margin-top:8px">
+              <input id="annTitle" type="text" placeholder="Title" style="flex:1;padding:8px;border-radius:8px;border:1px solid rgba(0,0,0,0.06)" />
+              <input id="annDate" type="datetime-local" style="width:220px;padding:8px;border-radius:8px;border:1px solid rgba(0,0,0,0.06)" />
+            </div>
+            <textarea id="annText" placeholder="Announcement text" style="width:100%;margin-top:8px;padding:8px;border-radius:8px;border:1px solid rgba(0,0,0,0.06)"></textarea>
+
+<div style="margin-top:8px">
+  <label>Duration</label>
+  <select id="annDuration" style="padding:8px;border-radius:8px;border:1px solid rgba(0,0,0,0.06)">
+    <option value="5">5 Minutes</option>
+    <option value="15">15 Minutes</option>
+    <option value="30">30 Minutes</option>
+    <option value="60">1 Hour</option>
+    <option value="360">6 Hours</option>
+    <option value="720">12 Hours</option>
+    <option value="1440">24 Hours</option>
+    <option value="2880">48 Hours (2 Days)</option>
+  </select>
+</div>
+            <div style="display:flex;gap:8px;margin-top:8px">
+              <button id="addAnnouncement" class="btn small">Add Announcement</button>
+              <button id="clearAnnouncements" class="btn small">Clear All</button>
+            </div>
+            <div style="margin-top:12px">
+              <div class="ann-list" id="annList"></div>
+            </div>
+          </div>
+
+          <!-- COUNTDOWNS -->
+          <div id="panelCountdowns" class="panel" style="display:none;margin-bottom:12px">
+            <h4>Countdowns</h4>
+            <div style="display:flex;gap:8px;margin-top:8px">
+              <input id="countTitle" type="text" placeholder="Event title" style="flex:1;padding:8px;border-radius:8px;border:1px solid rgba(0,0,0,0.06)" />
+              <input id="countDate" type="datetime-local" style="width:220px;padding:8px;border-radius:8px;border:1px solid rgba(0,0,0,0.06)" />
+            </div>
+            <div style="display:flex;gap:8px;margin-top:8px">
+              <label style="display:flex;align-items:center;gap:6px;"><input id="countFeatured" type="checkbox"> Featured Countdown</label><button id="addCountdown" class="btn small">Add Countdown</button>
+              <button id="clearCountdowns" class="btn small">Clear All</button>
+            </div>
+            <div style="margin-top:12px">
+              <div class="countdown-list" id="countList"></div>
+            </div>
+          </div>
+
+          <!-- PEOPLE & PHOTOS -->
+          <div id="panelPeople" class="panel" style="display:none;margin-bottom:12px">
+            <h4>People & Photos</h4>
+            <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
+              <input id="personName" type="text" placeholder="Name" style="flex:1;padding:8px;border-radius:8px;border:1px solid rgba(0,0,0,0.06)" />
+              <input id="personRole" type="text" placeholder="Role" style="width:180px;padding:8px;border-radius:8px;border:1px solid rgba(0,0,0,0.06)" />
+            </div>
+            <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
+              <input id="personPhoto" type="file" accept="image/*" />
+              <button id="addPerson" class="btn small">Add Person</button>
+              <button id="clearPeople" class="btn small">Clear All</button>
+            </div>
+            <div style="margin-top:12px">
+              <div class="people-list" id="peopleList"></div>
+            </div>
+          </div>
+
+          <!-- USERS -->
+          <div id="panelUsers" class="panel" style="display:none;margin-bottom:12px">
+            <h4>Users (Admins)</h4>
+            <div style="display:flex;gap:8px;margin-top:8px">
+              <input id="newUser" type="text" placeholder="username" style="flex:1;padding:8px;border-radius:8px;border:1px solid rgba(0,0,0,0.06)" />
+              <input id="newPass" type="password" placeholder="password" style="width:160px;padding:8px;border-radius:8px;border:1px solid rgba(0,0,0,0.06)" />
+              <button id="addUser" class="btn small">Add</button>
+            </div>
+            <div id="userList" class="user-list" aria-live="polite"></div>
+          </div>
+
+          <!-- LIVE PREVIEW -->
+          <div class="panel" style="margin-top:12px">
+            <h4>Live Preview</h4>
+            <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:8px">
+              <div style="flex:1;min-width:260px">
+                <strong>Health</strong>
+                <div id="previewHealth" style="margin-top:6px;padding:8px;border-radius:8px;background:rgba(255,255,255,0.02)"></div>
+              </div>
+              <div style="flex:1;min-width:260px">
+                <strong>Age</strong>
+                <div id="previewAge" style="margin-top:6px;padding:8px;border-radius:8px;background:rgba(255,255,255,0.02)"></div>
+              </div>
+              <div style="flex:1;min-width:260px">
+                <strong>More</strong>
+                <div id="previewMore" style="margin-top:6px;padding:8px;border-radius:8px;background:rgba(255,255,255,0.02)"></div>
+              </div>
+              <div style="flex:1;min-width:260px">
+                <strong>Caretakers</strong>
+                <div id="previewOwners" style="margin-top:6px;padding:8px;border-radius:8px;background:rgba(255,255,255,0.02)"></div>
+              </div>
+            </div>
+          </div>
+
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    /* ---------- Assets & data ---------- */
+    const MASCOT = '/static/Spike2.jpg';
+    const HERO = '/static/Spike2.jpg';
+    const PHOTOS = [
+      { src: '/static/Spike1.jpg', title: 'Spike basking', caption: 'Sunny morning bask' },
+      { src: '/static/Spike2.jpg', title: 'Spike close-up', caption: 'Curious little face' },
+      { src: '/static/Spike3.jpg', title: 'Spike exploring', caption: 'First adventure outside the tank' }
+    ];
+
+    /* ---------- Safe page routing (hash-based) ---------- */
+    const homePage = document.getElementById('homePage');
+    const dashboardPage = document.getElementById('dashboardPage');
+    const adminPage = document.getElementById('adminPage');
+    const adminPageInner = document.querySelector('.admin-page');
+
+    function showPageByHash(){
+      const h = (location.hash || '#home').replace('#','') || 'home';
+
+      // Hide everything first
+      homePage.classList.remove('active');
+      dashboardPage.classList.remove('active');
+      if (adminPage) adminPage.classList.remove('active');
+      if (adminPageInner) adminPageInner.style.display = 'none';
+
+      // Show only the requested page
+      if (h === 'dashboard') {
+        dashboardPage.classList.add('active');
+      } else if (h === 'admin') {
+        if (adminPage) adminPage.classList.add('active');
+        if (adminPageInner) adminPageInner.style.display = 'block';
+      } else {
+        homePage.classList.add('active');
+      }
+
+      // ensure we are at top of the newly shown page
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    }
+
+    window.addEventListener('load', showPageByHash);
+    window.addEventListener('hashchange', showPageByHash);
+
+    /* ---------- Falling tiles spawn (safe) ---------- */
+    const fallLayer = document.getElementById('fallLayer');
+    let spawnTimer = null;
+
+    function spawnFalling(){
+      if (!fallLayer) return;
+      if (fallLayer.children.length > 80) return;
+
+      const el = document.createElement('div');
+      el.className = 'baby';
+      el.style.backgroundImage = `url("${MASCOT}")`;
+
+      // viewport width
+      const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);
+      const sizePx = Math.min(28 + Math.random() * 56, Math.round(vw * 0.18)); // never larger than 18vw
+      el.style.width = sizePx + 'px';
+      el.style.height = sizePx + 'px';
+
+      // random horizontal start within viewport (left px)
+      const startX = Math.floor(Math.random() * Math.max(1, vw - sizePx));
+      el.style.left = startX + 'px';
+
+      // animation
+      const dur = 5 + Math.random() * 6;
+      el.style.animation = `fallAnim ${dur}s linear forwards`;
+      el.style.animationDelay = (Math.random() * 0.6) + 's';
+
+      fallLayer.appendChild(el);
+
+      // remove after animation finishes
+      setTimeout(() => {
+        if (el && el.parentNode) el.parentNode.removeChild(el);
+      }, (dur + 1.2) * 1000);
+    }
+
+    function startFalling(){ if (spawnTimer) return; spawnTimer = setInterval(spawnFalling, 260); }
+    function stopFalling(){ if (!spawnTimer) return; clearInterval(spawnTimer); spawnTimer = null; }
+
+    startFalling();
+
+    /* ---------- Toggle falling ---------- */
+    document.getElementById('toggleFall').addEventListener('click', ()=>{
+      const btn = document.getElementById('toggleFall');
+      if (btn.textContent.includes('stopped')) { startFalling(); btn.textContent = 'Stop falling spikes'; }
+      else { stopFalling(); btn.textContent = 'Falling stopped ✓'; }
+    });
+
+    /* ---------- Dashboard card interactions ---------- */
+    document.querySelectorAll('.card').forEach(card=>{
+      card.addEventListener('click', (e)=>{
+        if (e.target.closest('.btn')) return;
+        card.setAttribute('aria-pressed','true');
+        setTimeout(()=> card.removeAttribute('aria-pressed'), 220);
+        if (card.id === 'card-thanks'){ openVideoModal(); return; }
+        if (card.id === 'card-live'){ openLiveModalFromCard(card); return; }
+        const details = card.querySelector('.card-details') ? card.querySelector('.card-details').getAttribute('data-text') : '';
+        const img = card.querySelector('.card-details') ? card.querySelector('.card-details').getAttribute('data-img') : null;
+        if (details) showSimpleModal(details, img);
+      });
+      card.addEventListener('keydown', (e)=> { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); card.click(); }});
+    });
+
+    function showSimpleModal(text, img){
+      const overlay = document.getElementById('jokeOverlay');
+      document.getElementById('jokeImg').src = img || MASCOT;
+      document.getElementById('jokeTitle').textContent = 'Details';
+      document.getElementById('jokeText').textContent = text || '';
+      overlay.classList.add('show');
+    }
+    document.getElementById('closeJoke').addEventListener('click', ()=> { document.getElementById('jokeOverlay').classList.remove('show'); });
+
+    /* ---------- Joke button ---------- */
+    const jokes = [
+      "Why did the bearded dragon bring a towel? Because he heard the basking spot was a little 'toasty'!",
+      "What do bearded dragons use to text? Reptile-phones — they love a good 'scale' emoji.",
+      "Why did Spike sit on the clock? He wanted to be on 'beard' time."
+    ];
+    function getDailyIndex(){ const d=new Date(); return d.getDate() % jokes.length; }
+    document.getElementById('dashboardJokeBtn').addEventListener('click', ()=> {
+      document.getElementById('jokeImg').src = MASCOT;
+      document.getElementById('jokeTitle').textContent = "Spike's Joke of the Day";
+      document.getElementById('jokeText').textContent = jokes[getDailyIndex()];
+      document.getElementById('jokeOverlay').classList.add('show');
+    });
+
+    /* ---------- Viewer (prev/next/close) ---------- */
+    const viewerBackdrop = document.getElementById('viewerBackdrop');
+    const viewerImg = document.getElementById('viewerImg');
+    const viewerTitle = document.getElementById('viewerTitle');
+    const viewerPrev = document.getElementById('viewerPrev');
+    const viewerNext = document.getElementById('viewerNext');
+    const viewerClose = document.getElementById('viewerClose');
+    let currentIndex = 0;
+    function openViewer(index){
+      currentIndex = (index || 0) % PHOTOS.length;
+      updateViewer();
+      viewerBackdrop.classList.add('show');
+    }
+    function updateViewer(){
+      const p = PHOTOS[currentIndex];
+      viewerImg.src = p.src;
+      viewerTitle.textContent = p.title || `Photo ${currentIndex+1}`;
+    }
+    function closeViewer(){ viewerBackdrop.classList.remove('show'); }
+    document.getElementById('picturesBtn').addEventListener('click', ()=> openViewer(0));
+    viewerPrev.addEventListener('click', ()=> { currentIndex = (currentIndex - 1 + PHOTOS.length) % PHOTOS.length; updateViewer(); });
+    viewerNext.addEventListener('click', ()=> { currentIndex = (currentIndex + 1) % PHOTOS.length; updateViewer(); });
+    viewerClose.addEventListener('click', closeViewer);
+
+    /* ---------- Video modal ---------- */
+    const videoBackdrop = document.getElementById('videoBackdrop');
+    function openVideoModal(){ videoBackdrop.classList.add('show'); }
+    document.getElementById('openVideoModal').addEventListener('click', openVideoModal);
+    document.getElementById('closeVideo').addEventListener('click', ()=> { videoBackdrop.classList.remove('show'); });
+    const playSmall = document.getElementById('playSmall');
+    if (playSmall) playSmall.addEventListener('click', openVideoModal);
+
+    /* ---------- Live modal (go2rtc MSE via WebSocket) ---------- */
+    const liveBackdrop = document.getElementById('liveBackdrop');
+    const WS_URL = 'wss://brycton.kingscorner.us/live/api/ws?src=pet_cam';
+    let spikeStream = null;
+    let spikeCheck = null;
+
+    function startSpikeLive(){
+      stopSpikeLive();
+      const statusEl = document.getElementById('liveStatus');
+      const holder = document.getElementById('spikeLiveHolder');
+      statusEl.textContent = 'Connecting\u2026';
+      spikeStream = document.createElement('video-stream');
+      spikeStream.setAttribute('mode', 'mse');
+      spikeStream.style.width = '100%';
+      spikeStream.style.display = 'block';
+      holder.appendChild(spikeStream);
+      try { spikeStream.mode = 'mse'; spikeStream.src = WS_URL; } catch(e){}
+      spikeCheck = setInterval(() => {
+        const v = spikeStream && spikeStream.video;
+        if (v && !v.paused && v.readyState >= 3) { statusEl.textContent = 'Live'; clearInterval(spikeCheck); spikeCheck = null; }
+      }, 400);
+      setTimeout(() => { if (statusEl.textContent.indexOf('Connecting') === 0) statusEl.textContent = "Spike's camera is waking up\u2026 give it a moment!"; }, 9000);
+    }
+
+    function stopSpikeLive(){
+      if (spikeCheck){ clearInterval(spikeCheck); spikeCheck = null; }
+      if (spikeStream){ try { spikeStream.src = ''; } catch(e){} try { spikeStream.remove(); } catch(e){} spikeStream = null; }
+      const holder = document.getElementById('spikeLiveHolder');
+      if (holder) holder.innerHTML = '';
+    }
+
+    function openLiveModalFromCard(card){
+      liveBackdrop.classList.add('show');
+      startSpikeLive();
+    }
+    document.getElementById('closeLive').addEventListener('click', ()=> { liveBackdrop.classList.remove('show'); stopSpikeLive(); });
+
+    /* ---------- Admin user & content store (localStorage) ---------- */
+    const LS_USERS_KEY = 'spike_admin_users_v1';
+    const LS_CONTENT_KEY = 'spike_site_content_v1';
+    const LS_ANN_KEY = 'spike_announcements_v1';
+    const LS_COUNT_KEY = 'spike_countdowns_v1';
+    const LS_PEOPLE_KEY = 'spike_people_v1';
+
+    function loadUsers(){
+      const raw = localStorage.getItem(LS_USERS_KEY);
+      if (!raw){
+        const defaultUsers = [{username:'Brycton', password:'092311'}];
+        localStorage.setItem(LS_USERS_KEY, JSON.stringify(defaultUsers));
+        return defaultUsers;
+      }
+      try { return JSON.parse(raw) || []; } catch(e){ return []; }
+    }
+    function saveUsers(users){ localStorage.setItem(LS_USERS_KEY, JSON.stringify(users)); }
+
+    function loadContent(){
+      const raw = localStorage.getItem(LS_CONTENT_KEY);
+      if (!raw){
+        const initial = {
+          health: document.getElementById('healthDetails').getAttribute('data-text'),
+          age: document.getElementById('ageDetails').getAttribute('data-text'),
+          more: document.getElementById('moreDetails').getAttribute('data-text'),
+          owners: document.getElementById('ownersDetails').getAttribute('data-text')
+        };
+        localStorage.setItem(LS_CONTENT_KEY, JSON.stringify(initial));
+        return initial;
+      }
+      try { return JSON.parse(raw) || {}; } catch(e){ return {}; }
+    }
+    function saveContent(content){ localStorage.setItem(LS_CONTENT_KEY, JSON.stringify(content)); }
+
+    function loadAnnouncements(){ try { return JSON.parse(localStorage.getItem(LS_ANN_KEY)) || []; } catch(e){ return []; } }
+    function saveAnnouncements(list){ localStorage.setItem(LS_ANN_KEY, JSON.stringify(list)); }
+
+    function loadCountdowns(){ try { return JSON.parse(localStorage.getItem(LS_COUNT_KEY)) || []; } catch(e){ return []; } }
+    function saveCountdowns(list){ localStorage.setItem(LS_COUNT_KEY, JSON.stringify(list)); }
+
+    function loadPeople(){ try { return JSON.parse(localStorage.getItem(LS_PEOPLE_KEY)) || []; } catch(e){ return []; } }
+    function savePeople(list){ localStorage.setItem(LS_PEOPLE_KEY, JSON.stringify(list)); }
+
+    function applyContentToCards(){
+      const content = loadContent();
+      if (content.health) document.getElementById('healthDetails').setAttribute('data-text', content.health);
+      if (content.age) document.getElementById('ageDetails').setAttribute('data-text', content.age);
+      if (content.more) document.getElementById('moreDetails').setAttribute('data-text', content.more);
+      if (content.owners) document.getElementById('ownersDetails').setAttribute('data-text', content.owners);
+      updatePreview();
+    }
+
+    function populateAdminFields(){
+      const content = loadContent();
+      document.getElementById('adminHealth').value = content.health || '';
+      document.getElementById('adminAge').value = content.age || '';
+      document.getElementById('adminMore').value = content.more || '';
+      document.getElementById('adminOwners').value = content.owners || '';
+      updatePreview();
+    }
+
+    function updatePreview(){
+      const content = loadContent();
+      document.getElementById('previewHealth').textContent = content.health || '';
+      document.getElementById('previewAge').textContent = content.age || '';
+      document.getElementById('previewMore').textContent = content.more || '';
+      document.getElementById('previewOwners').textContent = content.owners || '';
+    }
+
+    function renderUserList(){
+      const users = loadUsers();
+      const list = document.getElementById('userList');
+      if (!list) return;
+      list.innerHTML = '';
+      users.forEach((u, idx) => {
+        const div = document.createElement('div');
+        div.className = 'user-item';
+        div.innerHTML = `<span style="font-weight:800">${u.username}</span><div><button data-idx="${idx}" class="btn small remove-user">Remove</button></div>`;
+        list.appendChild(div);
+      });
+      list.querySelectorAll('.remove-user').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          const idx = Number(btn.getAttribute('data-idx'));
+          const users = loadUsers();
+          if (users.length <= 1){ alert('At least one admin must remain.'); return; }
+          users.splice(idx,1);
+          saveUsers(users);
+          renderUserList();
+        });
+      });
+    }
+
+    /* ---------- Announcements UI ---------- */
+    function renderAnnouncements(){
+      let list = loadAnnouncements();
+
+      list = list.filter(a => !a.expires || a.expires > Date.now());
+
+      saveAnnouncements(list);
+      const container = document.getElementById('annList');
+      const dash = document.getElementById('dashboardAnnouncements');
+      if (!container || !dash) return;
+      container.innerHTML = '';
+      if (!list.length) container.innerHTML = '<div class="muted">No announcements</div>';
+      list.slice().reverse().forEach((a, i) => {
+        const idx = list.length - 1 - i;
+        const el = document.createElement('div');
+        el.className = 'ann-item';
+        el.innerHTML = `<div style="flex:1"><strong>${a.title || 'Announcement'}</strong><div style="font-size:13px;color:var(--muted);margin-top:6px">${a.text}</div><div style="font-size:12px;color:var(--muted);margin-top:6px">${a.when ? new Date(a.when).toLocaleString() : ''}</div></div><div style="display:flex;flex-direction:column;gap:6px"><button data-idx="${idx}" class="btn small remove-ann">Remove</button></div>`;
+        container.appendChild(el);
+      });
+      const dashHtml = list.length ? list.map(a => `<div style="padding:8px;border-bottom:1px solid rgba(0,0,0,0.04)"><strong>${a.title}</strong><div style="font-size:13px;color:var(--muted)">${a.text}</div></div>`).join('') : '<div class="muted">? Announcement panel disabled</div>';
+      document.getElementById('dashboardAnnouncements').innerHTML = dashHtml;
+
+      const homeBanner = document.getElementById('homeAnnouncement');
+      const homeText = document.getElementById('homeAnnouncementText');
+      const homeAuthor = document.getElementById('homeAnnouncementAuthor');
+
+      const topBanner = document.getElementById('dashboardTopAnnouncement');
+      const topText = document.getElementById('dashboardTopAnnouncementText');
+      const topAuthor = document.getElementById('dashboardTopAnnouncementAuthor');
+
+      if (list.length && homeBanner && topBanner) {
+        const latest = list[list.length - 1];
+
+        homeBanner.style.display = 'block';
+        topBanner.style.display = 'block';
+
+        homeText.textContent = latest.text;
+        topText.textContent = latest.text;
+
+        const authorText = latest.author
+          ? ('Posted by: ' + latest.author)
+          : '';
+
+        homeAuthor.textContent = authorText;
+        topAuthor.textContent = authorText;
+      } else {
+        homeBanner.style.display = 'none';
+        topBanner.style.display = 'none';
+      }
+
+      container.querySelectorAll('.remove-ann').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          const idx = Number(btn.getAttribute('data-idx'));
+          const arr = loadAnnouncements();
+          arr.splice(idx,1);
+          saveAnnouncements(arr);
+          renderAnnouncements();
+        });
+      });
+    }
+
+    document.getElementById('addAnnouncement').addEventListener('click', ()=>{
+      const title = document.getElementById('annTitle').value.trim();
+      const text = document.getElementById('annText').value.trim();
+      const when = document.getElementById('annDate').value || null;
+      if (!text){ alert('Enter announcement text'); return; }
+      const arr = loadAnnouncements();
+      const duration = Number(document.getElementById("annDuration").value);
+const expires = Date.now() + (duration * 60 * 1000);
+
+arr.length = 0;
+
+arr.push({
+  title: "Announcement",
+  text,
+  expires
+});
+      saveAnnouncements(arr);
+      document.getElementById('annTitle').value = '';
+      document.getElementById('annText').value = '';
+      document.getElementById('annDate').value = '';
+      renderAnnouncements();
+    });
+    document.getElementById('clearAnnouncements').addEventListener('click', ()=>{
+      if (!confirm('Clear all announcements?')) return;
+      saveAnnouncements([]);
+      renderAnnouncements();
+    });
+
+    /* ---------- Countdowns UI ---------- */
+    function renderCountdowns(){
+      const list = loadCountdowns();
+      const container = document.getElementById('countList');
+      if (!container) return;
+      container.innerHTML = '';
+      if (!list.length) container.innerHTML = '<div class="muted">No countdowns</div>';
+      list.forEach((c, idx) => {
+        const el = document.createElement('div');
+        el.className = 'count-item';
+        el.innerHTML = `<div style="flex:1"><strong>${c.title}</strong><div style="font-size:13px;color:var(--muted)">${c.target}</div><div style="font-size:13px;margin-top:6px" id="countdown-${idx}">--</div></div><div style="display:flex;flex-direction:column;gap:6px"><button data-idx="${idx}" class="btn small remove-count">Remove</button></div>`;
+        container.appendChild(el);
+      });
+      container.querySelectorAll('.remove-count').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          const idx = Number(btn.getAttribute('data-idx'));
+          const arr = loadCountdowns();
+          arr.splice(idx,1);
+          saveCountdowns(arr);
+          renderCountdowns();
+        });
+      });
+      updateAllCountdowns();
+    }
+
+    function updateAllCountdowns(){
+      const list = loadCountdowns();
+      list.forEach((c, idx) => {
+        const el = document.getElementById(`countdown-${idx}`);
+        if (!el) return;
+        const now = Date.now();
+        const target = new Date(c.target).getTime();
+        const diff = target - now;
+        if (diff <= 0) el.textContent = 'Event started';
+        else {
+          const days = Math.floor(diff / (1000*60*60*24));
+          const hours = Math.floor((diff % (1000*60*60*24)) / (1000*60*60));
+          const mins = Math.floor((diff % (1000*60*60)) / (1000*60));
+          const secs = Math.floor((diff % (1000*60)) / 1000);
+          el.textContent = `${days}d ${hours}h ${mins}m ${secs}s`;
+        }
+      });
+
+      // dashboard preview
+      const dash = document.getElementById('dashboardCountdowns');
+      if (dash) {
+        const html = list.length ? list.map((c, i) => `<div style="padding:8px;border-bottom:1px solid rgba(0,0,0,0.04)"><strong>${c.title}</strong><div style="font-size:13px;color:var(--muted)">${c.target}</div><div style="font-size:13px;margin-top:6px" id="dash-count-${i}">--</div></div>`).join('') : '<div class="muted">? Countdown panel disabled</div>';
+        dash.innerHTML = html;
+        // update dashboard countdowns too
+        list.forEach((c, i) => {
+          const el = document.getElementById(`dash-count-${i}`);
+          if (!el) return;
+          const now = Date.now();
+          const target = new Date(c.target).getTime();
+          const diff = target - now;
+          if (diff <= 0) el.textContent = 'Event started';
+          else {
+            const days = Math.floor(diff / (1000*60*60*24));
+            const hours = Math.floor((diff % (1000*60*60*24)) / (1000*60*60));
+            const mins = Math.floor((diff % (1000*60*60)) / (1000*60));
+            const secs = Math.floor((diff % (1000*60)) / 1000);
+            el.textContent = `${days}d ${hours}h ${mins}m ${secs}s`;
+          }
+        });
+      }
+    }
+
+    document.getElementById('addCountdown').addEventListener('click', ()=>{
+      const title = document.getElementById('countTitle').value.trim();
+      const target = document.getElementById('countDate').value;
+      if (!title || !target){ alert('Enter title and date'); return; }
+      const arr = loadCountdowns();
+      const featured = document.getElementById('countFeatured').checked;
+
+      if (featured) {
+        arr.forEach(c => c.featured = false);
+      }
+
+      arr.push({
+        title,
+        target,
+        featured
+      });
+      saveCountdowns(arr);
+      document.getElementById('countTitle').value = '';
+      document.getElementById('countDate').value = '';
+      renderCountdowns();
+    });
+    document.getElementById('clearCountdowns').addEventListener('click', ()=>{
+      if (!confirm('Clear all countdowns?')) return;
+      saveCountdowns([]);
+      renderCountdowns();
+    });
+
+    setInterval(updateAllCountdowns, 1000);
+
+    /* ---------- People & Photos UI ---------- */
+    function renderPeople(){
+      const list = loadPeople();
+      const container = document.getElementById('peopleList');
+      if (!container) return;
+      container.innerHTML = '';
+      if (!list.length) container.innerHTML = '<div class="muted">No people added</div>';
+      list.forEach((p, idx) => {
+        const el = document.createElement('div');
+        el.className = 'person-card';
+        el.innerHTML = `<img src="${p.photo}" alt="${p.name}" /><div style="flex:1"><strong>${p.name}</strong><div style="font-size:13px;color:var(--muted)">${p.role}</div></div><div><button data-idx="${idx}" class="btn small remove-person">Remove</button></div>`;
+        container.appendChild(el);
+      });
+      container.querySelectorAll('.remove-person').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          const idx = Number(btn.getAttribute('data-idx'));
+          const arr = loadPeople();
+          arr.splice(idx,1);
+          savePeople(arr);
+          renderPeople();
+        });
+      });
+    }
+
+    document.getElementById('addPerson').addEventListener('click', ()=>{
+      const name = document.getElementById('personName').value.trim();
+      const role = document.getElementById('personRole').value.trim();
+      const fileInput = document.getElementById('personPhoto');
+      if (!name || !role){ alert('Enter name and role'); return; }
+      if (!fileInput.files || !fileInput.files[0]){ alert('Choose a photo'); return; }
+      const file = fileInput.files[0];
+      const reader = new FileReader();
+      reader.onload = function(e){
+        const photoData = e.target.result;
+        const arr = loadPeople();
+        arr.push({name, role, photo: photoData});
+        savePeople(arr);
+        document.getElementById('personName').value = '';
+        document.getElementById('personRole').value = '';
+        fileInput.value = '';
+        renderPeople();
+      };
+      reader.readAsDataURL(file);
+    });
+    document.getElementById('clearPeople').addEventListener('click', ()=>{
+      if (!confirm('Clear all people?')) return;
+      savePeople([]);
+      renderPeople();
+    });
+
+    /* ---------- Admin actions: content saves ---------- */
+    document.getElementById('saveHealth').addEventListener('click', ()=>{
+      const content = loadContent();
+      content.health = document.getElementById('adminHealth').value.trim();
+      saveContent(content);
+      applyContentToCards();
+      alert('Health details saved.');
+    });
+    document.getElementById('saveAge').addEventListener('click', ()=>{
+      const content = loadContent();
+      content.age = document.getElementById('adminAge').value.trim();
+      saveContent(content);
+      applyContentToCards();
+      alert('Age details saved.');
+    });
+    document.getElementById('saveMore').addEventListener('click', ()=>{
+      const content = loadContent();
+      content.more = document.getElementById('adminMore').value.trim();
+      saveContent(content);
+      applyContentToCards();
+      alert('More info saved.');
+    });
+    document.getElementById('saveOwners').addEventListener('click', ()=>{
+      const content = loadContent();
+      content.owners = document.getElementById('adminOwners').value.trim();
+      saveContent(content);
+      applyContentToCards();
+      alert('Caretakers text saved.');
+    });
+
+    /* ---------- Users management ---------- */
+    document.getElementById('addUser').addEventListener('click', ()=>{
+      const u = document.getElementById('newUser').value.trim();
+      const p = document.getElementById('newPass').value;
+      if (!u || !p){ alert('Enter username and password'); return; }
+      const users = loadUsers();
+      if (users.some(x=>x.username.toLowerCase() === u.toLowerCase())){ alert('User already exists'); return; }
+      users.push({username:u, password:p});
+      saveUsers(users);
+      document.getElementById('newUser').value = '';
+      document.getElementById('newPass').value = '';
+      renderUserList();
+    });
+
+    /* ---------- Login flow ---------- */
+    const loginBackdrop = document.getElementById('loginBackdrop');
+    const loginUser = document.getElementById('loginUser');
+    const loginPass = document.getElementById('loginPass');
+    const loginSubmit = document.getElementById('loginSubmit');
+    const loginCancel = document.getElementById('loginCancel');
+    const unauthBackdrop = document.getElementById('unauthBackdrop');
+
+    function openLoginModal(){
+      loginUser.value = '';
+      loginPass.value = '';
+      loginBackdrop.style.display = 'flex';
+      loginUser.focus();
+    }
+    function closeLoginModal(){ loginBackdrop.style.display = 'none'; }
+
+    document.getElementById('adminLink').addEventListener('click', openLoginModal);
+    loginCancel.addEventListener('click', closeLoginModal);
+
+    loginSubmit.addEventListener('click', ()=>{
+      const u = loginUser.value.trim();
+      const p = loginPass.value;
+      const users = loadUsers();
+      const found = users.find(x => x.username === u && x.password === p);
+      closeLoginModal();
+      if (found){
+        location.hash = 'admin';
+        adminPageInner.style.display = 'block';
+        populateAdminFields();
+        renderUserList();
+        renderAnnouncements();
+        renderCountdowns();
+        renderPeople();
+      } else {
+        unauthBackdrop.style.display = 'flex';
+      }
+    });
+
+    document.getElementById('unauthClose').addEventListener('click', ()=> { unauthBackdrop.style.display = 'none'; });
+
+    /* ---------- Admin nav switching ---------- */
+    const navItems = {
+      content: document.getElementById('navContent'),
+      announcements: document.getElementById('navAnnouncements'),
+      countdowns: document.getElementById('navCountdowns'),
+      people: document.getElementById('navPeople'),
+      users: document.getElementById('navUsers')
+    };
+    function setActivePanel(panel){
+      document.getElementById('panelContent').style.display = panel === 'content' ? 'block' : 'none';
+      document.getElementById('panelAnnouncements').style.display = panel === 'announcements' ? 'block' : 'none';
+      document.getElementById('panelCountdowns').style.display = panel === 'countdowns' ? 'block' : 'none';
+      document.getElementById('panelPeople').style.display = panel === 'people' ? 'block' : 'none';
+      document.getElementById('panelUsers').style.display = panel === 'users' ? 'block' : 'none';
+      Object.values(navItems).forEach(n => n.classList.remove('active'));
+      if (panel === 'content') navItems.content.classList.add('active');
+      if (panel === 'announcements') navItems.announcements.classList.add('active');
+      if (panel === 'countdowns') navItems.countdowns.classList.add('active');
+      if (panel === 'people') navItems.people.classList.add('active');
+      if (panel === 'users') navItems.users.classList.add('active');
+    }
+    navItems.content.addEventListener('click', ()=> setActivePanel('content'));
+    navItems.announcements.addEventListener('click', ()=> setActivePanel('announcements'));
+    navItems.countdowns.addEventListener('click', ()=> setActivePanel('countdowns'));
+    navItems.people.addEventListener('click', ()=> setActivePanel('people'));
+    navItems.users.addEventListener('click', ()=> setActivePanel('users'));
+
+    /* ---------- Admin navigation buttons ---------- */
+    document.getElementById('adminBack').addEventListener('click', ()=> { location.hash = 'dashboard'; });
+    document.getElementById('adminLogout').addEventListener('click', ()=> { logoutAdmin(); });
+
+    function logoutAdmin(){
+      location.hash = 'dashboard';
+      adminPageInner.style.display = 'none';
+    }
+
+    /* ---------- Navigation buttons (home/dashboard) ---------- */
+    document.getElementById('enterBtn').addEventListener('click', () => { location.hash = 'dashboard'; });
+    document.getElementById('backHomeBtn').addEventListener('click', () => { location.hash = 'home'; });
+
+    /* ---------- Initialize on load ---------- */
+    (function init(){
+      loadUsers();
+      loadContent();
+      applyContentToCards();
+      populateAdminFields();
+      renderUserList();
+      renderAnnouncements();
+      renderCountdowns();
+      renderPeople();
+      setActivePanel('content');
+    })();
+
+    /* ---------- Prevent control clicks bubbling ---------- */
+    document.querySelectorAll('.btn, .btn.small, .nav-item, .admin-link').forEach(b => {
+      b.addEventListener('click', (e)=> e.stopPropagation());
+    });
+
+    /* ---------- Accessibility: Escape closes modals ---------- */
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape'){
+        if (loginBackdrop.style.display === 'flex') loginBackdrop.style.display = 'none';
+        if (unauthBackdrop.style.display === 'flex') unauthBackdrop.style.display = 'none';
+        if (document.getElementById('jokeOverlay').classList.contains('show')) document.getElementById('jokeOverlay').classList.remove('show');
+        if (viewerBackdrop.classList.contains('show')) viewerBackdrop.classList.remove('show');
+        if (videoBackdrop.classList.contains('show')) videoBackdrop.classList.remove('show');
+        if (liveBackdrop.classList.contains('show')) { liveBackdrop.classList.remove('show'); stopSpikeLive(); }
+      }
+    });
+
+    /* ---------- Preload images ---------- */
+    (function preload(){
+      [HERO, MASCOT].forEach(s => { const i = new Image(); i.src = s; });
+      PHOTOS.forEach(p => { const i = new Image(); i.src = p.src; });
+      const spike5 = new Image(); spike5.src = '/static/Spike5.jpg';
+    })();
+  </script>
+  <script>
+    (function(){
+      const STREAMS_URL = 'https://brycton.kingscorner.us/live/api/streams?src=pet_cam';
+      async function checkSpikeStatus(){
+        const dot = document.getElementById('liveDot');
+        const label = document.getElementById('liveLabel');
+        if (!dot || !label) return;
+        try {
+          const r = await fetch(STREAMS_URL, { cache: 'no-store' });
+          if (!r.ok) throw new Error('http ' + r.status);
+          const data = await r.json();
+          const live = data && Array.isArray(data.producers) && data.producers.length > 0;
+          if (live){
+            dot.classList.remove('dot-live','is-off'); dot.classList.add('is-live');
+            label.textContent = 'Live';
+          } else {
+            dot.classList.remove('dot-live','is-live'); dot.classList.add('is-off');
+            label.textContent = 'Unavailable';
+          }
+        } catch(e){
+          dot.classList.remove('dot-live','is-live'); dot.classList.add('is-off');
+          label.textContent = 'Unavailable';
+        }
+      }
+      checkSpikeStatus();
+      setInterval(checkSpikeStatus, 20000);
+    })();
+  </script>
+</body>
+</html>
+
+
+
+
+
