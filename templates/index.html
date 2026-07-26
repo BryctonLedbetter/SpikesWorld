@@ -246,6 +246,14 @@
     }
   </style>
   <script type="module" src="{{ url_for('static', filename='video-stream.js') }}"></script>
+  <style>
+    /* make modal dialogs solid so background cards don't bleed through */
+    #factsBackdrop .card, #galleryBackdrop .card, #liveBackdrop .card{
+      background: #241708 !important;
+      border: 1px solid rgba(244,209,155,0.35) !important;
+      box-shadow: 0 30px 80px rgba(0,0,0,0.7) !important;
+    }
+  </style>
 </head>
 
 <body>
