@@ -730,7 +730,19 @@
       try {
         const offer = await spikePC.createOffer();
         await spikePC.setLocalDescription(offer);
-        const res = await fetch(WHEP_URL, { method: 'POST', headers: { 'Content-Type': 'application/sdp' }, body: offer.sdp });
+        // MediaMTX is non-trickle: wait for ICE gathering before sending the offer
+        await new Promise((resolve) => {
+          if (spikePC.iceGatheringState === 'complete') return resolve();
+          const check = () => {
+            if (spikePC.iceGatheringState === 'complete') {
+              spikePC.removeEventListener('icegatheringstatechange', check);
+              resolve();
+            }
+          };
+          spikePC.addEventListener('icegatheringstatechange', check);
+          setTimeout(resolve, 3000);
+        });
+        const res = await fetch(WHEP_URL, { method: 'POST', headers: { 'Content-Type': 'application/sdp' }, body: spikePC.localDescription.sdp });
         if (!res.ok) throw new Error('signaling ' + res.status);
         const answer = await res.text();
         await spikePC.setRemoteDescription({ type: 'answer', sdp: answer });
