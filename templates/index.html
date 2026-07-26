@@ -54,10 +54,12 @@
     body{
       font-family: "Inter", "Segoe UI", system-ui, Arial, sans-serif;
       color: var(--cream);
-      /* warm sunset gradient background */
+      /* desert sunset photo behind a dark overlay so cards/text stay readable */
       background:
-        radial-gradient(1200px 500px at 75% -5%, rgba(244,209,155,0.28), transparent 60%),
-        linear-gradient(180deg, var(--earth) 0%, var(--earth-dark) 55%, #241708 100%);
+        linear-gradient(180deg, rgba(58,39,22,0.68), rgba(36,23,8,0.82)),
+        url("{{ url_for('static', filename='desert-bg.jpg') }}");
+      background-size: cover;
+      background-position: center;
       background-attachment: fixed;
     }
     img, video{ max-width:100%; height:auto; display:block; }
