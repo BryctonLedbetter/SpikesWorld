@@ -243,6 +243,7 @@
       .grid-small{ grid-template-columns: 1fr; }
     }
   </style>
+  <script type="module" src="{{ url_for('static', filename='video-stream.js') }}"></script>
 </head>
 
 <body>
@@ -309,8 +310,8 @@
         <div class="card">
           <h3><span class="ico">📡</span> View Spike Live</h3>
           <p>Live stream status</p>
-          <div class="status"><span class="dot"></span> Unavailable</div>
-          <div class="card-actions"><button class="btn">View Details</button></div>
+          <div class="status"><span id="liveDot" class="dot"></span> <span id="liveLabel">Unavailable</span></div>
+          <div class="card-actions"><button class="btn" id="openLiveBtn">View Details</button></div>
         </div>
 
         <div class="card">
@@ -373,13 +374,89 @@
       Brycton can ignore this or learn from it later.
     ============================================================
   -->
+  <!-- ===== Spike Live modal ===== -->
+  <div id="liveBackdrop" style="position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.7);z-index:1000;padding:20px">
+    <div class="card" style="max-width:900px;width:100%">
+      <h3><span class="ico">📡</span> View Spike Live 🦎</h3>
+      <div style="margin-top:12px">
+        <div id="spikeLiveHolder" style="width:100%;min-height:320px;border-radius:12px;background:#000;overflow:hidden"></div>
+      </div>
+      <p id="liveStatus" style="margin-top:10px;font-weight:800;color:var(--muted)">Connecting…</p>
+      <div class="card-actions" style="text-align:right"><button class="btn" id="closeLive">Close</button></div>
+    </div>
+  </div>
+
+  <style>
+    #liveDot.is-live{ background:var(--good); animation:livePulse 1.6s ease-in-out infinite; }
+    #liveDot.is-off{ background:var(--warn); animation:none; }
+    @keyframes livePulse{
+      0%{ box-shadow:0 0 0 0 rgba(46,204,113,0.55); }
+      70%{ box-shadow:0 0 0 10px rgba(46,204,113,0); }
+      100%{ box-shadow:0 0 0 0 rgba(46,204,113,0); }
+    }
+  </style>
+
   <script>
+    // sidebar highlight
     document.querySelectorAll('.nav-item').forEach(function(item){
       item.addEventListener('click', function(){
         document.querySelectorAll('.nav-item').forEach(function(n){ n.classList.remove('active'); });
         item.classList.add('active');
       });
     });
+
+    // ---- Spike live feed (go2rtc MSE via WebSocket) ----
+    const liveBackdrop = document.getElementById('liveBackdrop');
+    const WS_URL = 'wss://brycton.kingscorner.us/live/api/ws?src=pet_cam';
+    let spikeStream = null;
+
+    function startSpikeLive(){
+      stopSpikeLive();
+      const statusEl = document.getElementById('liveStatus');
+      const holder = document.getElementById('spikeLiveHolder');
+      statusEl.textContent = 'Connecting…';
+      spikeStream = document.createElement('video-stream');
+      spikeStream.setAttribute('mode','mse');
+      spikeStream.style.width = '100%';
+      spikeStream.style.display = 'block';
+      holder.appendChild(spikeStream);
+      try { spikeStream.mode = 'mse'; spikeStream.src = WS_URL; } catch(e){}
+      let done = false;
+      const iv = setInterval(function(){
+        const v = spikeStream && spikeStream.video;
+        if (v && !v.paused && v.readyState >= 3){ statusEl.textContent = 'Live'; done = true; clearInterval(iv); }
+      }, 400);
+      setTimeout(function(){ if(!done && statusEl.textContent.indexOf('Connecting')===0) statusEl.textContent = "Spike's camera is waking up… give it a moment!"; }, 9000);
+    }
+    function stopSpikeLive(){
+      if (spikeStream){ try { spikeStream.src=''; } catch(e){} try { spikeStream.remove(); } catch(e){} spikeStream=null; }
+      const holder = document.getElementById('spikeLiveHolder');
+      if (holder) holder.innerHTML = '';
+    }
+    document.getElementById('openLiveBtn').addEventListener('click', function(){ liveBackdrop.style.display='flex'; startSpikeLive(); });
+    document.getElementById('closeLive').addEventListener('click', function(){ liveBackdrop.style.display='none'; stopSpikeLive(); });
+    document.addEventListener('keydown', function(e){ if(e.key==='Escape' && liveBackdrop.style.display==='flex'){ liveBackdrop.style.display='none'; stopSpikeLive(); } });
+
+    // ---- Live status dot poller ----
+    (function(){
+      const STREAMS_URL = 'https://brycton.kingscorner.us/live/api/streams?src=pet_cam';
+      async function check(){
+        const dot = document.getElementById('liveDot');
+        const label = document.getElementById('liveLabel');
+        if (!dot || !label) return;
+        try{
+          const r = await fetch(STREAMS_URL, { cache:'no-store' });
+          if(!r.ok) throw 0;
+          const d = await r.json();
+          const live = d && Array.isArray(d.producers) && d.producers.length > 0;
+          if(live){ dot.classList.remove('is-off'); dot.classList.add('is-live'); label.textContent='Live'; }
+          else { dot.classList.remove('is-live'); dot.classList.add('is-off'); label.textContent='Unavailable'; }
+        }catch(e){
+          dot.classList.remove('is-live'); dot.classList.add('is-off'); label.textContent='Unavailable';
+        }
+      }
+      check(); setInterval(check, 20000);
+    })();
   </script>
 </body>
 </html>
