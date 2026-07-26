@@ -147,6 +147,7 @@
       .people-list{grid-template-columns:1fr}
     }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@1"></script>
 </head>
 <body>
 
@@ -708,53 +709,40 @@
     const playSmall = document.getElementById('playSmall');
     if (playSmall) playSmall.addEventListener('click', openVideoModal);
 
-    /* ---------- Live modal (WebRTC / WHEP) ---------- */
+    /* ---------- Live modal (HLS via go2rtc) ---------- */
     const liveBackdrop = document.getElementById('liveBackdrop');
-    const WHEP_URL = 'https://brycton.kingscorner.us/live/pet-cam/whep';
-    let spikePC = null;
+    const HLS_URL = 'https://brycton.kingscorner.us/live/api/stream.m3u8?src=pet_cam';
+    let spikeHls = null;
 
-    async function startSpikeLive(){
+    function startSpikeLive(){
       stopSpikeLive();
       const statusEl = document.getElementById('liveStatus');
       const videoEl = document.getElementById('spikeLive');
       statusEl.textContent = 'Connecting…';
-      spikePC = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
-      spikePC.addTransceiver('video', { direction: 'recvonly' });
-      spikePC.addTransceiver('audio', { direction: 'recvonly' });
-      spikePC.ontrack = (e) => { videoEl.srcObject = e.streams[0]; statusEl.textContent = 'Live'; };
-      spikePC.onconnectionstatechange = () => {
-        if (spikePC && (spikePC.connectionState === 'failed' || spikePC.connectionState === 'disconnected')){
-          statusEl.textContent = "Spike's camera dropped — try reopening.";
-        }
-      };
-      try {
-        const offer = await spikePC.createOffer();
-        await spikePC.setLocalDescription(offer);
-        // MediaMTX is non-trickle: wait for ICE gathering before sending the offer
-        await new Promise((resolve) => {
-          if (spikePC.iceGatheringState === 'complete') return resolve();
-          const check = () => {
-            if (spikePC.iceGatheringState === 'complete') {
-              spikePC.removeEventListener('icegatheringstatechange', check);
-              resolve();
-            }
-          };
-          spikePC.addEventListener('icegatheringstatechange', check);
-          setTimeout(resolve, 3000);
+      const onPlaying = () => { statusEl.textContent = 'Live'; };
+      videoEl.addEventListener('playing', onPlaying, { once: true });
+      if (videoEl.canPlayType('application/vnd.apple.mpegurl')) {
+        // Native HLS (Safari / iOS)
+        videoEl.src = HLS_URL;
+        videoEl.play().catch(()=>{});
+      } else if (window.Hls && window.Hls.isSupported()) {
+        spikeHls = new Hls({ lowLatencyMode: true });
+        spikeHls.loadSource(HLS_URL);
+        spikeHls.attachMedia(videoEl);
+        spikeHls.on(Hls.Events.ERROR, (evt, data) => {
+          if (data && data.fatal) {
+            statusEl.textContent = "Spike's camera is offline right now — check back soon!";
+          }
         });
-        const res = await fetch(WHEP_URL, { method: 'POST', headers: { 'Content-Type': 'application/sdp' }, body: spikePC.localDescription.sdp });
-        if (!res.ok) throw new Error('signaling ' + res.status);
-        const answer = await res.text();
-        await spikePC.setRemoteDescription({ type: 'answer', sdp: answer });
-      } catch (err) {
-        statusEl.textContent = "Spike's camera is offline right now — check back soon!";
+      } else {
+        statusEl.textContent = "Your browser can't play the live stream.";
       }
     }
 
     function stopSpikeLive(){
-      if (spikePC){ try { spikePC.close(); } catch(e){} spikePC = null; }
       const v = document.getElementById('spikeLive');
-      if (v) v.srcObject = null;
+      if (spikeHls){ try { spikeHls.destroy(); } catch(e){} spikeHls = null; }
+      if (v){ try { v.pause(); } catch(e){} v.removeAttribute('src'); v.load(); }
     }
 
     function openLiveModalFromCard(card){
