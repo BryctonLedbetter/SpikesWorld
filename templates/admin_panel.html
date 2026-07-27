@@ -43,7 +43,7 @@
     .card .hint{ color:var(--muted); font-weight:600; margin:0 0 14px; font-size:14px; }
 
     label{ display:block; font-weight:800; margin:10px 0 4px; font-size:14px; }
-    input[type=text], textarea, input[type=file]{
+    input[type=text], input[type=date], textarea, input[type=file]{
       width:100%; padding:11px 12px; border-radius:10px; font-size:15px;
       border:1px solid rgba(244,209,155,0.3); background:rgba(0,0,0,0.22);
       color:var(--cream); font-weight:600; font-family:inherit;
@@ -124,21 +124,52 @@
         <textarea name="body" placeholder="Write your announcement here..."></textarea>
         <div class="actions"><button class="btn btn-accent" type="submit">➕ Post Announcement</button></div>
       </form>
-
       {% for a in announcements %}
         <div class="list-item">
-          <div>
-            <strong>{{ a["title"] }}</strong>
-            <div>{{ a["body"] }}</div>
-            <div class="meta">{{ a["created_at"] }}</div>
-          </div>
+          <div><strong>{{ a["title"] }}</strong><div>{{ a["body"] }}</div>
+            <div class="meta">{{ a["created_at"] }}</div></div>
           <form method="post" action="{{ url_for('announcement_delete', aid=a['id']) }}">
-            <button class="btn btn-danger" type="submit">Delete</button>
-          </form>
+            <button class="btn btn-danger" type="submit">Delete</button></form>
         </div>
-      {% else %}
-        <p class="hint" style="margin-top:12px">No announcements yet.</p>
-      {% endfor %}
+      {% else %}<p class="hint" style="margin-top:12px">No announcements yet.</p>{% endfor %}
+    </div>
+
+    <!-- ============ COUNTDOWNS ============ -->
+    <div class="card">
+      <h2>🌵 Countdowns</h2>
+      <p class="hint">Add events to count down to (like a new light arriving). The soonest upcoming one shows big on the homepage.</p>
+      <form method="post" action="{{ url_for('countdown_add') }}">
+        <div class="row">
+          <div>
+            <label>What are we counting down to?</label>
+            <input type="text" name="title" placeholder="e.g. Spike's new heat lamp arrives!" />
+          </div>
+          <div>
+            <label>Date</label>
+            <input type="date" name="target_date" />
+          </div>
+        </div>
+        <div class="actions"><button class="btn btn-accent" type="submit">➕ Add Countdown</button></div>
+      </form>
+      {% for cd in countdowns %}
+        <div class="list-item">
+          <div><strong>{{ cd["title"] }}</strong>
+            <div class="meta">Target: {{ cd["target_date"] }}</div></div>
+          <form method="post" action="{{ url_for('countdown_delete', cid=cd['id']) }}">
+            <button class="btn btn-danger" type="submit">Delete</button></form>
+        </div>
+      {% else %}<p class="hint" style="margin-top:12px">No countdowns yet.</p>{% endfor %}
+    </div>
+
+    <!-- ============ BIRTHDAY / AGE ============ -->
+    <div class="card">
+      <h2>🎂 Spike's Birthday</h2>
+      <p class="hint">Set Spike's birthday and the Age Tracking card figures out his age and growth stage automatically. Not sure of the exact date? Pick your best guess — you can change it anytime.</p>
+      <form method="post" action="{{ url_for('birthday_update') }}">
+        <label>Birthday</label>
+        <input type="date" name="birthday" value="{{ birthday }}" />
+        <div class="actions"><button class="btn btn-accent" type="submit">💾 Save Birthday</button></div>
+      </form>
     </div>
 
     <!-- ============ TANK CONDITION ============ -->
@@ -147,18 +178,12 @@
       <p class="hint">Update the temperatures and humidity in Spike's tank.</p>
       <form method="post" action="{{ url_for('tank_update') }}">
         <div class="row">
-          <div>
-            <label>Hot side</label>
-            <input type="text" name="hot" value="{{ tank['hot'] if tank else '' }}" placeholder="95°F" />
-          </div>
-          <div>
-            <label>Cool side</label>
-            <input type="text" name="cool" value="{{ tank['cool'] if tank else '' }}" placeholder="80°F" />
-          </div>
-          <div>
-            <label>Humidity</label>
-            <input type="text" name="humidity" value="{{ tank['humidity'] if tank else '' }}" placeholder="35%" />
-          </div>
+          <div><label>Hot side</label>
+            <input type="text" name="hot" value="{{ tank['hot'] if tank else '' }}" placeholder="95°F" /></div>
+          <div><label>Cool side</label>
+            <input type="text" name="cool" value="{{ tank['cool'] if tank else '' }}" placeholder="80°F" /></div>
+          <div><label>Humidity</label>
+            <input type="text" name="humidity" value="{{ tank['humidity'] if tank else '' }}" placeholder="35%" /></div>
         </div>
         <div class="actions"><button class="btn btn-accent" type="submit">💾 Save Tank Condition</button></div>
       </form>
@@ -177,10 +202,33 @@
       </form>
     </div>
 
+    <!-- ============ CARETAKERS ============ -->
+    <div class="card">
+      <h2>👥 Caretakers</h2>
+      <p class="hint">Add the people who take care of Spike. They show up on the Caretakers card.</p>
+      <form method="post" action="{{ url_for('caretaker_add') }}">
+        <div class="row">
+          <div><label>Name</label>
+            <input type="text" name="name" placeholder="e.g. Brycton" /></div>
+          <div><label>Role (optional)</label>
+            <input type="text" name="role" placeholder="e.g. Main Caretaker" /></div>
+        </div>
+        <div class="actions"><button class="btn btn-accent" type="submit">➕ Add Caretaker</button></div>
+      </form>
+      {% for c in caretakers %}
+        <div class="list-item">
+          <div><strong>{{ c["name"] }}</strong>
+            {% if c["role"] %}<div class="meta">{{ c["role"] }}</div>{% endif %}</div>
+          <form method="post" action="{{ url_for('caretaker_delete', cid=c['id']) }}">
+            <button class="btn btn-danger" type="submit">Remove</button></form>
+        </div>
+      {% else %}<p class="hint" style="margin-top:12px">No caretakers added yet.</p>{% endfor %}
+    </div>
+
     <!-- ============ PHOTOS ============ -->
     <div class="card">
       <h2>🖼️ Pictures of Spike</h2>
-      <p class="hint">Upload photos. They appear in the homepage gallery.</p>
+      <p class="hint">Upload photos. They appear in the homepage gallery (visitors can click to enlarge).</p>
       <form method="post" action="{{ url_for('photo_upload') }}" enctype="multipart/form-data">
         <label>Choose a photo (jpg, png, gif, webp — up to 12 MB)</label>
         <input type="file" name="photo" accept="image/*" />
@@ -188,19 +236,15 @@
         <input type="text" name="caption" placeholder="Spike basking in the sun" />
         <div class="actions"><button class="btn btn-accent" type="submit">⬆️ Upload Photo</button></div>
       </form>
-
       <div class="photo-grid">
         {% for p in photos %}
           <figure>
             <img src="{{ url_for('static', filename='uploads/' + p['filename']) }}" alt="{{ p['caption'] }}" />
             <figcaption>{{ p["caption"] or "No caption" }}</figcaption>
             <form method="post" action="{{ url_for('photo_delete', pid=p['id']) }}">
-              <button class="btn btn-danger" type="submit" style="width:100%">Delete</button>
-            </form>
+              <button class="btn btn-danger" type="submit" style="width:100%">Delete</button></form>
           </figure>
-        {% else %}
-          <p class="hint">No photos uploaded yet.</p>
-        {% endfor %}
+        {% else %}<p class="hint">No photos uploaded yet.</p>{% endfor %}
       </div>
     </div>
 
@@ -210,41 +254,33 @@
   <div id="tutorialBackdrop">
     <div class="modal">
       <h2>📖 How to Run Spike's World</h2>
-      <p class="hint">Hey Brycton! This is your control room. 🦎 Here's everything you can do — anything you change here shows up on the website for everyone who visits!</p>
+      <p class="hint">Hey Brycton! This is your control room. 🦎 Anything you change here shows up on the website for everyone!</p>
 
-      <div class="step">
-        <h3>📣 Post an Announcement</h3>
-        <p>Got news about Spike? Type a <strong>Title</strong> and a <strong>Message</strong>, then click <strong>Post Announcement</strong>. The newest one shows up on the homepage. You can delete old ones with the Delete button.</p>
-      </div>
+      <div class="step"><h3>📣 Post an Announcement</h3>
+        <p>Type a <strong>Title</strong> and <strong>Message</strong>, then click <strong>Post Announcement</strong>. The newest shows on the homepage. Delete old ones anytime.</p></div>
 
-      <div class="step">
-        <h3>💧 Update the Tank Condition</h3>
-        <p>Change the <strong>Hot side</strong>, <strong>Cool side</strong>, and <strong>Humidity</strong> boxes to match Spike's tank, then click <strong>Save Tank Condition</strong>. You can type it however you like, e.g. "95°F" or "35%".</p>
-      </div>
+      <div class="step"><h3>🌵 Add a Countdown</h3>
+        <p>Counting down to something fun (like a new light arriving)? Type what it is and pick the <strong>Date</strong>, then click <strong>Add Countdown</strong>. The soonest one shows big on the homepage and counts down automatically.</p></div>
 
-      <div class="step">
-        <h3>❤️ Update Spike's Health</h3>
-        <p>Put a short <strong>Status</strong> (like "Perfect" or "Shedding") and add <strong>Notes</strong> about how he's doing. Click <strong>Save Health</strong> and it updates the health card on the homepage.</p>
-      </div>
+      <div class="step"><h3>🎂 Set Spike's Birthday</h3>
+        <p>Pick Spike's birthday and click <strong>Save</strong>. The Age Tracking card figures out his age in years, months, and days — plus his growth stage — all by itself!</p></div>
 
-      <div class="step">
-        <h3>🖼️ Upload Photos</h3>
-        <p>Click <strong>Choose a photo</strong>, pick a picture of Spike (jpg, png, gif, or webp, up to 12 MB), add a <strong>Caption</strong> if you want, then click <strong>Upload Photo</strong>. Visitors see them in the "Pictures of Spike" gallery. Delete any photo with its Delete button.</p>
-      </div>
+      <div class="step"><h3>💧 Update the Tank Condition</h3>
+        <p>Change the Hot side, Cool side, and Humidity boxes, then click <strong>Save Tank Condition</strong>.</p></div>
 
-      <div class="step">
-        <h3>📡 The Live Camera</h3>
-        <p>The "View Spike Live" card streams your camera automatically — you don't need to do anything here. When the camera is on, the dot turns green and says "Live"!</p>
-      </div>
+      <div class="step"><h3>❤️ Update Spike's Health</h3>
+        <p>Put a short <strong>Status</strong> (like "Perfect") and add <strong>Notes</strong>, then click <strong>Save Health</strong>.</p></div>
 
-      <div class="step">
-        <h3>🏠 See Your Changes</h3>
-        <p>Click <strong>View Site</strong> (top right) anytime to see the real website. The homepage updates on its own every 30 seconds, or just refresh the page.</p>
-      </div>
+      <div class="step"><h3>👥 Add Caretakers</h3>
+        <p>Type a <strong>Name</strong> and optional <strong>Role</strong>, then click <strong>Add Caretaker</strong>. They appear on the Caretakers card.</p></div>
 
-      <div class="tip">
-        🔒 <strong>Keep your password secret!</strong> Only you can log in here. When you're done, click <strong>Log Out</strong> — especially on a shared computer.
-      </div>
+      <div class="step"><h3>🖼️ Upload Photos</h3>
+        <p>Choose a photo, add a caption, and click <strong>Upload Photo</strong>. Visitors can click any photo to see it bigger!</p></div>
+
+      <div class="step"><h3>📡 The Live Camera</h3>
+        <p>The "View Spike Live" card streams your camera automatically — nothing to do here. When the camera's on, the dot turns green and says "Live"!</p></div>
+
+      <div class="tip">🔒 <strong>Keep your password secret!</strong> Only you can log in here. Click <strong>Log Out</strong> when you're done, especially on a shared computer.</div>
 
       <div class="actions" style="text-align:right; margin-top:18px">
         <button class="btn btn-accent" id="closeTutorial">Got it! 🦎</button>

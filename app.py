@@ -3,19 +3,11 @@
   SPIKE'S WORLD — Flask backend with admin dashboard
   Built by Uncle Stephen. 🦎
 
-  WHAT THIS DOES
-  - Serves the homepage (templates/index.html)
-  - Stores site content in a small SQLite database (spike.db)
-  - Gives Brycton a password-protected /admin area to:
-      * post announcements
-      * update the tank condition (temps + humidity)
-      * update Spike's health status
-      * upload / delete photos of Spike
-  - Exposes /api/content so the homepage can SHOW that content
-    to everyone who visits (not just the person who typed it).
+  Manages: announcements, tank condition, health, photos,
+  countdowns, caretakers, and Spike's birthday.
+  Public homepage reads everything from /api/content.
 
-  HOW TO CHANGE THE ADMIN PASSWORD
-  - Edit ADMIN_PASSWORD below. That's the only login Brycton needs.
+  CHANGE THE ADMIN PASSWORD below (ADMIN_PASSWORD).
 ============================================================
 """
 
@@ -26,12 +18,12 @@ from functools import wraps
 
 from flask import (
     Flask, render_template, request, redirect, url_for,
-    session, jsonify, flash, abort
+    session, jsonify, flash
 )
 from werkzeug.utils import secure_filename
 
 # ---------------------------------------------------------
-#  CONFIG  — change these if you want
+#  CONFIG
 # ---------------------------------------------------------
 ADMIN_PASSWORD = "spike123"          # <-- Brycton's admin password (change me!)
 SECRET_KEY     = "change-this-to-any-random-string-you-like"
@@ -40,7 +32,7 @@ BASE_DIR      = os.path.dirname(os.path.abspath(__file__))
 DB_PATH       = os.path.join(BASE_DIR, "spike.db")
 UPLOAD_FOLDER = os.path.join(BASE_DIR, "static", "uploads")
 ALLOWED_EXT   = {"png", "jpg", "jpeg", "gif", "webp"}
-MAX_MB        = 12                    # max upload size in megabytes
+MAX_MB        = 12
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = SECRET_KEY
@@ -49,52 +41,62 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 
 # ---------------------------------------------------------
-#  DATABASE  — auto-creates spike.db on first run
+#  DATABASE
 # ---------------------------------------------------------
 def get_db():
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
 
+def _now():
+    return datetime.now().strftime("%b %d, %Y %I:%M %p")
+
 def init_db():
-    conn = get_db()
-    c = conn.cursor()
+    conn = get_db(); c = conn.cursor()
     c.execute("""CREATE TABLE IF NOT EXISTS announcements(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        title TEXT NOT NULL,
-        body  TEXT NOT NULL,
-        created_at TEXT NOT NULL
-    )""")
+        title TEXT NOT NULL, body TEXT NOT NULL, created_at TEXT NOT NULL)""")
     c.execute("""CREATE TABLE IF NOT EXISTS tank(
         id INTEGER PRIMARY KEY CHECK (id = 1),
-        hot TEXT, cool TEXT, humidity TEXT, updated_at TEXT
-    )""")
+        hot TEXT, cool TEXT, humidity TEXT, updated_at TEXT)""")
     c.execute("""CREATE TABLE IF NOT EXISTS health(
         id INTEGER PRIMARY KEY CHECK (id = 1),
-        status TEXT, notes TEXT, updated_at TEXT
-    )""")
+        status TEXT, notes TEXT, updated_at TEXT)""")
     c.execute("""CREATE TABLE IF NOT EXISTS photos(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        filename TEXT NOT NULL,
-        caption  TEXT,
-        uploaded_at TEXT NOT NULL
-    )""")
-    # seed the single-row tables with friendly defaults if empty
+        filename TEXT NOT NULL, caption TEXT, uploaded_at TEXT NOT NULL)""")
+    c.execute("""CREATE TABLE IF NOT EXISTS countdowns(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL, target_date TEXT NOT NULL, created_at TEXT NOT NULL)""")
+    c.execute("""CREATE TABLE IF NOT EXISTS caretakers(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL, role TEXT, created_at TEXT NOT NULL)""")
+    c.execute("""CREATE TABLE IF NOT EXISTS settings(
+        key TEXT PRIMARY KEY, value TEXT)""")
+    # seed single-row tables
     if not c.execute("SELECT 1 FROM tank WHERE id=1").fetchone():
         c.execute("INSERT INTO tank(id,hot,cool,humidity,updated_at) VALUES (1,?,?,?,?)",
                   ("95°F", "80°F", "35%", _now()))
     if not c.execute("SELECT 1 FROM health WHERE id=1").fetchone():
         c.execute("INSERT INTO health(id,status,notes,updated_at) VALUES (1,?,?,?)",
                   ("Perfect", "Spike is happy, eating well, and active!", _now()))
-    conn.commit()
-    conn.close()
+    conn.commit(); conn.close()
 
-def _now():
-    return datetime.now().strftime("%b %d, %Y %I:%M %p")
+def get_setting(key, default=""):
+    conn = get_db()
+    row = conn.execute("SELECT value FROM settings WHERE key=?", (key,)).fetchone()
+    conn.close()
+    return row["value"] if row else default
+
+def set_setting(key, value):
+    conn = get_db()
+    conn.execute("INSERT INTO settings(key,value) VALUES (?,?) "
+                 "ON CONFLICT(key) DO UPDATE SET value=excluded.value", (key, value))
+    conn.commit(); conn.close()
 
 
 # ---------------------------------------------------------
-#  AUTH  — simple single-password login
+#  AUTH
 # ---------------------------------------------------------
 def login_required(fn):
     @wraps(fn)
@@ -114,31 +116,28 @@ def home():
 
 @app.route("/api/content")
 def api_content():
-    """The homepage fetches this to display live content to all visitors."""
     conn = get_db()
-    anns = conn.execute(
-        "SELECT id,title,body,created_at FROM announcements ORDER BY id DESC"
-    ).fetchall()
+    anns = conn.execute("SELECT id,title,body,created_at FROM announcements ORDER BY id DESC").fetchall()
     tank   = conn.execute("SELECT hot,cool,humidity,updated_at FROM tank WHERE id=1").fetchone()
     health = conn.execute("SELECT status,notes,updated_at FROM health WHERE id=1").fetchone()
-    photos = conn.execute(
-        "SELECT id,filename,caption FROM photos ORDER BY id DESC"
-    ).fetchall()
+    photos = conn.execute("SELECT id,filename,caption FROM photos ORDER BY id DESC").fetchall()
+    counts = conn.execute("SELECT id,title,target_date FROM countdowns ORDER BY target_date ASC").fetchall()
+    carers = conn.execute("SELECT id,name,role FROM caretakers ORDER BY id ASC").fetchall()
     conn.close()
     return jsonify({
         "announcements": [dict(a) for a in anns],
         "tank":   dict(tank)   if tank   else {},
         "health": dict(health) if health else {},
-        "photos": [
-            {"id": p["id"], "caption": p["caption"] or "",
-             "url": url_for("static", filename="uploads/" + p["filename"])}
-            for p in photos
-        ],
+        "photos": [{"id": p["id"], "caption": p["caption"] or "",
+                    "url": url_for("static", filename="uploads/" + p["filename"])} for p in photos],
+        "countdowns": [dict(x) for x in counts],
+        "caretakers": [dict(x) for x in carers],
+        "birthday": get_setting("birthday", ""),
     })
 
 
 # ---------------------------------------------------------
-#  ADMIN ROUTES
+#  ADMIN
 # ---------------------------------------------------------
 @app.route("/admin", methods=["GET", "POST"])
 def admin_login():
@@ -164,9 +163,12 @@ def admin_panel():
     tank   = conn.execute("SELECT hot,cool,humidity,updated_at FROM tank WHERE id=1").fetchone()
     health = conn.execute("SELECT status,notes,updated_at FROM health WHERE id=1").fetchone()
     photos = conn.execute("SELECT id,filename,caption FROM photos ORDER BY id DESC").fetchall()
+    counts = conn.execute("SELECT id,title,target_date FROM countdowns ORDER BY target_date ASC").fetchall()
+    carers = conn.execute("SELECT id,name,role FROM caretakers ORDER BY id ASC").fetchall()
     conn.close()
     return render_template("admin_panel.html",
-                           announcements=anns, tank=tank, health=health, photos=photos)
+                           announcements=anns, tank=tank, health=health, photos=photos,
+                           countdowns=counts, caretakers=carers, birthday=get_setting("birthday", ""))
 
 # --- announcements ---
 @app.route("/admin/announcement/add", methods=["POST"])
@@ -176,8 +178,7 @@ def announcement_add():
     body  = (request.form.get("body")  or "").strip()
     if title and body:
         conn = get_db()
-        conn.execute("INSERT INTO announcements(title,body,created_at) VALUES (?,?,?)",
-                     (title, body, _now()))
+        conn.execute("INSERT INTO announcements(title,body,created_at) VALUES (?,?,?)", (title, body, _now()))
         conn.commit(); conn.close()
         flash("Announcement posted!", "ok")
     else:
@@ -187,9 +188,7 @@ def announcement_add():
 @app.route("/admin/announcement/delete/<int:aid>", methods=["POST"])
 @login_required
 def announcement_delete(aid):
-    conn = get_db()
-    conn.execute("DELETE FROM announcements WHERE id=?", (aid,))
-    conn.commit(); conn.close()
+    conn = get_db(); conn.execute("DELETE FROM announcements WHERE id=?", (aid,)); conn.commit(); conn.close()
     flash("Announcement deleted.", "ok")
     return redirect(url_for("admin_panel"))
 
@@ -197,12 +196,11 @@ def announcement_delete(aid):
 @app.route("/admin/tank", methods=["POST"])
 @login_required
 def tank_update():
-    hot      = (request.form.get("hot")      or "").strip()
-    cool     = (request.form.get("cool")     or "").strip()
-    humidity = (request.form.get("humidity") or "").strip()
     conn = get_db()
     conn.execute("UPDATE tank SET hot=?,cool=?,humidity=?,updated_at=? WHERE id=1",
-                 (hot, cool, humidity, _now()))
+                 ((request.form.get("hot") or "").strip(),
+                  (request.form.get("cool") or "").strip(),
+                  (request.form.get("humidity") or "").strip(), _now()))
     conn.commit(); conn.close()
     flash("Tank condition updated!", "ok")
     return redirect(url_for("admin_panel"))
@@ -211,11 +209,10 @@ def tank_update():
 @app.route("/admin/health", methods=["POST"])
 @login_required
 def health_update():
-    status = (request.form.get("status") or "").strip()
-    notes  = (request.form.get("notes")  or "").strip()
     conn = get_db()
     conn.execute("UPDATE health SET status=?,notes=?,updated_at=? WHERE id=1",
-                 (status, notes, _now()))
+                 ((request.form.get("status") or "").strip(),
+                  (request.form.get("notes") or "").strip(), _now()))
     conn.commit(); conn.close()
     flash("Health status updated!", "ok")
     return redirect(url_for("admin_panel"))
@@ -230,19 +227,14 @@ def photo_upload():
     file = request.files.get("photo")
     caption = (request.form.get("caption") or "").strip()
     if not file or file.filename == "":
-        flash("Please choose a photo to upload.", "error")
-        return redirect(url_for("admin_panel"))
+        flash("Please choose a photo to upload.", "error"); return redirect(url_for("admin_panel"))
     if not _allowed(file.filename):
-        flash("That file type isn't allowed. Use jpg, png, gif, or webp.", "error")
-        return redirect(url_for("admin_panel"))
-    # build a safe, unique filename
-    safe = secure_filename(file.filename)
+        flash("That file type isn't allowed. Use jpg, png, gif, or webp.", "error"); return redirect(url_for("admin_panel"))
     stamp = datetime.now().strftime("%Y%m%d%H%M%S")
-    fname = f"{stamp}_{safe}"
+    fname = f"{stamp}_{secure_filename(file.filename)}"
     file.save(os.path.join(UPLOAD_FOLDER, fname))
     conn = get_db()
-    conn.execute("INSERT INTO photos(filename,caption,uploaded_at) VALUES (?,?,?)",
-                 (fname, caption, _now()))
+    conn.execute("INSERT INTO photos(filename,caption,uploaded_at) VALUES (?,?,?)", (fname, caption, _now()))
     conn.commit(); conn.close()
     flash("Photo uploaded!", "ok")
     return redirect(url_for("admin_panel"))
@@ -253,19 +245,69 @@ def photo_delete(pid):
     conn = get_db()
     row = conn.execute("SELECT filename FROM photos WHERE id=?", (pid,)).fetchone()
     if row:
-        try:
-            os.remove(os.path.join(UPLOAD_FOLDER, row["filename"]))
-        except OSError:
-            pass
-        conn.execute("DELETE FROM photos WHERE id=?", (pid,))
-        conn.commit()
+        try: os.remove(os.path.join(UPLOAD_FOLDER, row["filename"]))
+        except OSError: pass
+        conn.execute("DELETE FROM photos WHERE id=?", (pid,)); conn.commit()
     conn.close()
     flash("Photo deleted.", "ok")
     return redirect(url_for("admin_panel"))
 
+# --- countdowns ---
+@app.route("/admin/countdown/add", methods=["POST"])
+@login_required
+def countdown_add():
+    title = (request.form.get("title") or "").strip()
+    date  = (request.form.get("target_date") or "").strip()   # expected: YYYY-MM-DD
+    if title and date:
+        conn = get_db()
+        conn.execute("INSERT INTO countdowns(title,target_date,created_at) VALUES (?,?,?)", (title, date, _now()))
+        conn.commit(); conn.close()
+        flash("Countdown added!", "ok")
+    else:
+        flash("Please enter both a title and a date.", "error")
+    return redirect(url_for("admin_panel"))
+
+@app.route("/admin/countdown/delete/<int:cid>", methods=["POST"])
+@login_required
+def countdown_delete(cid):
+    conn = get_db(); conn.execute("DELETE FROM countdowns WHERE id=?", (cid,)); conn.commit(); conn.close()
+    flash("Countdown deleted.", "ok")
+    return redirect(url_for("admin_panel"))
+
+# --- caretakers ---
+@app.route("/admin/caretaker/add", methods=["POST"])
+@login_required
+def caretaker_add():
+    name = (request.form.get("name") or "").strip()
+    role = (request.form.get("role") or "").strip()
+    if name:
+        conn = get_db()
+        conn.execute("INSERT INTO caretakers(name,role,created_at) VALUES (?,?,?)", (name, role, _now()))
+        conn.commit(); conn.close()
+        flash("Caretaker added!", "ok")
+    else:
+        flash("Please enter a name.", "error")
+    return redirect(url_for("admin_panel"))
+
+@app.route("/admin/caretaker/delete/<int:cid>", methods=["POST"])
+@login_required
+def caretaker_delete(cid):
+    conn = get_db(); conn.execute("DELETE FROM caretakers WHERE id=?", (cid,)); conn.commit(); conn.close()
+    flash("Caretaker removed.", "ok")
+    return redirect(url_for("admin_panel"))
+
+# --- birthday ---
+@app.route("/admin/birthday", methods=["POST"])
+@login_required
+def birthday_update():
+    date = (request.form.get("birthday") or "").strip()   # expected: YYYY-MM-DD
+    set_setting("birthday", date)
+    flash("Spike's birthday saved!", "ok")
+    return redirect(url_for("admin_panel"))
+
 
 # ---------------------------------------------------------
-init_db()   # make sure the database exists before serving
+init_db()
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8000, debug=True)

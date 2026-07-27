@@ -3,291 +3,139 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Spike's World — Dashboard</title>
-
-  <!--
-    ============================================================
-      SPIKE'S WORLD — DASHBOARD FRAMEWORK
-      Built by Uncle Stephen. Brycton: fill in the cards! 🦎
-
-      HOW THIS WORKS (read me!):
-      - The whole page is ONE layout: a sidebar on the left + a
-        main dashboard area on the right.
-      - Everything is styled with CSS variables up top in :root,
-        so you can change ALL the colors in one place.
-      - Each "card" is just a <div class="card"> ... </div>.
-        Put whatever content you want inside a card.
-      - To add a sidebar link, copy one <a class="nav-item"> line.
-      - To add a card, copy one <div class="card"> block.
-      No JavaScript framework, no Python needed — just HTML + CSS.
-    ============================================================
-  -->
+  <title>Spike's World</title>
 
   <style>
-    /* ======================================================
-       1) THEME COLORS  — change these to restyle everything
-       ====================================================== */
+    /* ====== THEME ====== */
     :root{
-      --sand-light:  #f4d19b;   /* light desert sand */
-      --sand:        #d2a676;   /* medium sand */
-      --clay:        #b07a48;   /* clay / accent */
-      --earth:       #5a3d24;   /* deep earth brown */
-      --earth-dark:  #3a2716;   /* darkest brown (page bg) */
-      --ink:         #2b1a10;   /* dark text */
-      --cream:       #fff7e8;   /* light text */
-      --muted:       #d9c3a5;   /* muted light text */
-      --good:        #2ecc71;   /* green = healthy / live */
-      --warn:        #e67e22;   /* orange = attention */
-
-      --radius: 16px;
-      --gap: 18px;
-      --shadow: 0 18px 40px rgba(0,0,0,0.35);
-      --card-bg: linear-gradient(160deg, rgba(210,166,118,0.16), rgba(90,61,36,0.28));
-      --card-border: 1px solid rgba(244,209,155,0.25);
+      --sand-light:#f4d19b; --sand:#d2a676; --clay:#b07a48;
+      --earth:#5a3d24; --earth-dark:#3a2716; --ink:#2b1a10;
+      --cream:#fff7e8; --muted:#d9c3a5; --good:#2ecc71; --warn:#e67e22;
+      --radius:16px; --gap:18px;
+      --shadow:0 18px 40px rgba(0,0,0,0.35);
+      --card-bg:linear-gradient(160deg, rgba(210,166,118,0.16), rgba(90,61,36,0.28));
+      --card-border:1px solid rgba(244,209,155,0.25);
     }
-
-    /* ======================================================
-       2) PAGE BASICS
-       ====================================================== */
-    *{ box-sizing: border-box; }
-    html, body{ margin:0; min-height:100%; }
+    *{ box-sizing:border-box; }
+    html,body{ margin:0; min-height:100%; }
     body{
-      font-family: "Inter", "Segoe UI", system-ui, Arial, sans-serif;
-      color: var(--cream);
-      /* desert sunset photo behind a dark overlay so cards/text stay readable */
+      font-family:"Inter","Segoe UI",system-ui,Arial,sans-serif; color:var(--cream);
       background:
         linear-gradient(180deg, rgba(58,39,22,0.68), rgba(36,23,8,0.82)),
         url("{{ url_for('static', filename='desert-bg.jpg') }}");
-      background-size: cover;
-      background-position: center;
-      background-attachment: fixed;
+      background-size:cover; background-position:center; background-attachment:fixed;
     }
-    img, video{ max-width:100%; height:auto; display:block; }
-    a{ color: inherit; text-decoration: none; }
+    img,video{ max-width:100%; height:auto; display:block; }
+    a{ color:inherit; text-decoration:none; }
 
-    /* ======================================================
-       3) OVERALL LAYOUT  — sidebar + main area
-       ====================================================== */
-    .app{
-      display: grid;
-      grid-template-columns: 260px 1fr;  /* sidebar width | rest */
-      gap: var(--gap);
-      max-width: 1400px;
-      margin: 0 auto;
-      padding: var(--gap);
-      min-height: 100vh;
-    }
+    /* ====== LAYOUT (no sidebar — full width) ====== */
+    .app{ max-width:1200px; margin:0 auto; padding:var(--gap); }
+    .main{ display:flex; flex-direction:column; gap:var(--gap); }
 
-    /* ======================================================
-       4) SIDEBAR
-       ====================================================== */
-    .sidebar{
-      background: var(--card-bg);
-      border: var(--card-border);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 18px 14px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      position: sticky;
-      top: var(--gap);
-      height: calc(100vh - 2*var(--gap));
-    }
-    .brand{
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 20px;
-      font-weight: 900;
-      color: var(--sand-light);
-      padding: 6px 8px 14px 8px;
-      letter-spacing: .5px;
-    }
-    .brand .logo{ font-size: 24px; }
-
-    .nav-item{
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 11px 12px;
-      border-radius: 10px;
-      font-weight: 700;
-      color: var(--muted);
-      transition: background .15s, color .15s, transform .15s;
-      cursor: pointer;
-    }
-    .nav-item .ico{ width: 22px; text-align: center; font-size: 17px; }
-    .nav-item:hover{ background: rgba(244,209,155,0.10); color: var(--cream); transform: translateX(2px); }
-    .nav-item.active{
-      background: linear-gradient(90deg, rgba(244,209,155,0.22), rgba(176,122,72,0.10));
-      color: var(--cream);
-      box-shadow: inset 0 0 0 1px rgba(244,209,155,0.25);
-    }
-
-    .sidebar .spacer{ flex: 1; }   /* pushes the button to the bottom */
-    .back-home{
-      margin-top: 8px;
-      text-align: center;
-      padding: 11px;
-      border-radius: 12px;
-      font-weight: 800;
-      color: var(--sand-light);
-      border: 1px solid rgba(244,209,155,0.3);
-      background: rgba(0,0,0,0.15);
-      cursor: pointer;
-    }
-    .back-home:hover{ background: rgba(244,209,155,0.12); }
-
-    /* ======================================================
-       5) MAIN AREA
-       ====================================================== */
-    .main{ display: flex; flex-direction: column; gap: var(--gap); }
-
-    .topbar{
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-    .page-title{ margin:0; font-size: 34px; font-weight: 900; letter-spacing: 1px; }
-    .page-sub{ margin: 4px 0 0 0; color: var(--muted); font-weight: 600; }
+    .topbar{ display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+    .page-title{ margin:0; font-size:38px; font-weight:900; letter-spacing:1px; display:flex; align-items:center; gap:10px; }
+    .page-sub{ margin:4px 0 0 0; color:var(--muted); font-weight:600; }
 
     .btn{
-      display:inline-flex; align-items:center; gap:8px;
-      padding: 10px 16px;
-      border-radius: 999px;
-      font-weight: 800;
-      color: var(--cream);
-      border: 1px solid rgba(244,209,155,0.3);
-      background: rgba(0,0,0,0.18);
-      cursor: pointer;
-      transition: background .15s, transform .15s;
+      display:inline-flex; align-items:center; gap:8px; padding:10px 16px; border-radius:999px;
+      font-weight:800; color:var(--cream); border:1px solid rgba(244,209,155,0.3);
+      background:rgba(0,0,0,0.18); cursor:pointer; transition:background .15s, transform .15s;
     }
-    .btn:hover{ background: rgba(244,209,155,0.14); transform: translateY(-1px); }
-    .btn-accent{ background: linear-gradient(180deg, var(--clay), var(--earth)); border-color: rgba(244,209,155,0.4); }
+    .btn:hover{ background:rgba(244,209,155,0.14); transform:translateY(-1px); }
+    .btn-accent{ background:linear-gradient(180deg,var(--clay),var(--earth)); border-color:rgba(244,209,155,0.4); }
 
-    /* ======================================================
-       6) CARDS
-       ====================================================== */
+    /* ====== CARDS ====== */
     .card{
-      background: var(--card-bg);
-      border: var(--card-border);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 18px;
-      transition: transform .15s, box-shadow .15s, border-color .15s;
+      background:var(--card-bg); border:var(--card-border); border-radius:var(--radius);
+      box-shadow:var(--shadow); padding:18px; transition:transform .15s, box-shadow .15s, border-color .15s;
     }
-    .card:hover{
-      transform: translateY(-3px);
-      box-shadow: 0 24px 55px rgba(0,0,0,0.45);
-      border-color: rgba(244,209,155,0.45);
-    }
-    .card h3{ margin: 0 0 6px 0; font-size: 18px; display:flex; align-items:center; gap:8px; }
-    .card p{ margin: 0; color: var(--muted); font-weight: 600; line-height: 1.4; }
-    .card .ico{ font-size: 18px; }
-
-    /* small status dot used on cards like "View Spike Live" */
+    .card:hover{ transform:translateY(-3px); box-shadow:0 24px 55px rgba(0,0,0,0.45); border-color:rgba(244,209,155,0.45); }
+    .card h3{ margin:0 0 6px 0; font-size:18px; display:flex; align-items:center; gap:8px; }
+    .card p{ margin:0; color:var(--muted); font-weight:600; line-height:1.4; }
+    .card .ico{ font-size:18px; }
     .status{ display:flex; align-items:center; gap:8px; margin-top:12px; font-weight:800; }
-    .dot{ width: 12px; height: 12px; border-radius: 50%; background: var(--warn); box-shadow: 0 0 0 4px rgba(230,126,34,0.18); }
-    .dot.is-good{ background: var(--good); box-shadow: 0 0 0 4px rgba(46,204,113,0.20); }
+    .dot{ width:12px; height:12px; border-radius:50%; background:var(--warn); box-shadow:0 0 0 4px rgba(230,126,34,0.18); }
+    .dot.is-good{ background:var(--good); box-shadow:0 0 0 4px rgba(46,204,113,0.20); }
+    .card-actions{ margin-top:14px; }
 
-    .card-actions{ margin-top: 14px; }
-
-    /* ======================================================
-       7) DASHBOARD GRIDS  (this is the layout from the mockup)
-       ====================================================== */
-
-    /* Row 1: wide announcement + countdown */
-    .grid-top{
-      display: grid;
-      grid-template-columns: 2fr 1fr;
-      gap: var(--gap);
+    /* live status dot */
+    #liveDot.is-live{ background:var(--good); animation:livePulse 1.6s ease-in-out infinite; }
+    #liveDot.is-off{ background:var(--warn); animation:none; }
+    @keyframes livePulse{
+      0%{ box-shadow:0 0 0 0 rgba(46,204,113,0.55); }
+      70%{ box-shadow:0 0 0 10px rgba(46,204,113,0); }
+      100%{ box-shadow:0 0 0 0 rgba(46,204,113,0); }
     }
+
+    /* ====== GRIDS ====== */
+    .grid-top{ display:grid; grid-template-columns:2fr 1fr; gap:var(--gap); }
     .countdown{
-      background: linear-gradient(160deg, rgba(46,204,113,0.18), rgba(46,204,113,0.06));
-      border-color: rgba(46,204,113,0.35);
-      text-align: center;
+      background:linear-gradient(160deg, rgba(46,204,113,0.18), rgba(46,204,113,0.06));
+      border-color:rgba(46,204,113,0.35); text-align:center;
     }
-    .countdown .big{ font-size: 26px; font-weight: 900; color: var(--sand-light); margin-top: 6px; }
+    .countdown .big{ font-size:24px; font-weight:900; color:var(--sand-light); margin-top:6px; }
 
-    /* Row 2: three big feature cards */
-    .grid-features{
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: var(--gap);
+    .grid-features{ display:grid; grid-template-columns:repeat(3,1fr); gap:var(--gap); }
+    .grid-small{ display:grid; grid-template-columns:repeat(4,1fr); gap:var(--gap); }
+    /* Age Tracking card spans two columns (fills the old Thank-You-Video slot) */
+    .span2{ grid-column:span 2; }
+    .age-stage{ margin-top:12px; font-weight:800; color:var(--sand-light); }
+    .age-next{ margin-top:6px; color:var(--muted); font-weight:700; font-size:14px; }
+
+    @media (max-width:1100px){
+      .grid-features{ grid-template-columns:repeat(2,1fr); }
+      .grid-small{ grid-template-columns:repeat(2,1fr); }
+      .span2{ grid-column:span 2; }
+    }
+    @media (max-width:860px){
+      .grid-top{ grid-template-columns:1fr; }
+      .grid-features{ grid-template-columns:1fr; }
+      .grid-small{ grid-template-columns:1fr; }
+      .span2{ grid-column:span 1; }
+      .page-title{ font-size:28px; }
     }
 
-    /* Row 3: row of smaller info cards */
-    .grid-small{
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: var(--gap);
+    /* ====== FOOTER CREDITS ====== */
+    .credits{
+      margin:28px auto 8px; text-align:center; color:var(--muted); font-weight:700; line-height:1.6;
+      display:flex; gap:24px; justify-content:center; flex-wrap:wrap;
     }
+    .credits .dev-main{ color:var(--sand-light); font-family:Georgia,serif; font-weight:900; }
 
-    /* ======================================================
-       8) RESPONSIVE  — collapse nicely on phones/tablets
-       ====================================================== */
-    @media (max-width: 1100px){
-      .grid-features{ grid-template-columns: repeat(2, 1fr); }
-      .grid-small{ grid-template-columns: repeat(3, 1fr); }
+    /* ====== MODALS (solid so nothing bleeds through) ====== */
+    .backdrop{
+      position:fixed; inset:0; display:none; align-items:center; justify-content:center;
+      background:rgba(0,0,0,0.75); z-index:1000; padding:20px;
     }
-    @media (max-width: 860px){
-      .app{ grid-template-columns: 1fr; }           /* stack sidebar on top */
-      .sidebar{ position: static; height: auto; flex-direction: column; }
-      .grid-top{ grid-template-columns: 1fr; }
-      .grid-features{ grid-template-columns: 1fr; }
-      .grid-small{ grid-template-columns: repeat(2, 1fr); }
-      .page-title{ font-size: 26px; }
+    .backdrop .modal{
+      background:#241708; border:1px solid rgba(244,209,155,0.35); border-radius:18px;
+      box-shadow:0 30px 80px rgba(0,0,0,0.7); max-width:900px; width:100%;
+      max-height:90vh; overflow:auto; padding:24px;
     }
-    @media (max-width: 520px){
-      .grid-small{ grid-template-columns: 1fr; }
+    .modal h3{ margin:0 0 6px; font-size:22px; display:flex; align-items:center; gap:8px; }
+    .modal ul{ line-height:1.7; margin:12px 0; padding-left:20px; }
+    /* photo lightbox */
+    #lightbox{
+      position:fixed; inset:0; display:none; align-items:center; justify-content:center;
+      background:rgba(0,0,0,0.9); z-index:1100; padding:20px; cursor:zoom-out;
     }
+    #lightbox img{ max-width:95vw; max-height:88vh; border-radius:12px; box-shadow:0 30px 80px rgba(0,0,0,0.8); }
+    #lightbox .cap{ position:absolute; bottom:24px; left:0; right:0; text-align:center; color:var(--cream); font-weight:700; }
+    .gallery-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:12px; margin-top:12px; }
+    .gallery-grid img{ width:100%; height:150px; object-fit:cover; border-radius:10px; cursor:zoom-in; }
   </style>
+
   <script type="module" src="{{ url_for('static', filename='video-stream.js') }}"></script>
-  <style>
-    /* make modal dialogs solid so background cards don't bleed through */
-    #factsBackdrop .card, #galleryBackdrop .card, #liveBackdrop .card{
-      background: #241708 !important;
-      border: 1px solid rgba(244,209,155,0.35) !important;
-      box-shadow: 0 30px 80px rgba(0,0,0,0.7) !important;
-    }
-  </style>
 </head>
 
 <body>
   <div class="app">
-
-    <!-- =========================================================
-         SIDEBAR NAV
-         Brycton: to add a link, copy one <div class="nav-item"> line.
-         The .active class just highlights the current page.
-         ========================================================= -->
-    <aside class="sidebar">
-      <div class="brand"><span class="logo">🦎</span> Spike's World</div>
-
-      <div class="nav-item active"><span class="ico">🏠</span> Dashboard</div>
-      <div class="nav-item"><span class="ico">📡</span> View Spike Live</div>
-      <div class="nav-item"><span class="ico">🖼️</span> Pictures of Spike</div>
-      <div class="nav-item"><span class="ico">❤️</span> Spike's Health</div>
-      <div class="nav-item"><span class="ico">📅</span> Age Tracking</div>
-      <div class="nav-item"><span class="ico">ℹ️</span> More About Dragons</div>
-      <div class="nav-item"><span class="ico">👥</span> Spike's Caretakers</div>
-      <div class="nav-item"><span class="ico">💧</span> Tank Condition</div>
-      <div class="nav-item"><span class="ico">🎬</span> Thank You Video</div>
-
-    </aside>
-
-    <!-- =========================================================
-         MAIN DASHBOARD
-         ========================================================= -->
     <main class="main">
 
-      <!-- Top bar: title + buttons -->
+      <!-- Title bar -->
       <div class="topbar">
         <div>
-          <h1 class="page-title">Dashboard</h1>
+          <h1 class="page-title"><span>🦎</span> Spike's World</h1>
           <p class="page-sub">Spike's live status, health, tank and more.</p>
         </div>
         <div>
@@ -297,93 +145,77 @@
 
       <!-- ROW 1: Announcement (wide) + Countdown -->
       <section class="grid-top">
-        <div class="card">
+        <div class="card" id="card-announcement">
           <h3><span class="ico">📣</span> Current Announcement</h3>
-          <p><strong style="color:var(--cream)">Add your announcement title here</strong></p>
-          <p style="margin-top:6px">Brycton — type your announcement message in this card.</p>
+          <p>Loading…</p>
         </div>
-
-        <div class="card countdown">
+        <div class="card countdown" id="card-countdown">
           <h3 style="justify-content:center"><span class="ico">🌵</span> Featured Countdown</h3>
-          <p>Spike's Birthday</p>
-          <div class="big">124d 05h 42m</div>
-          <p style="margin-top:6px">until the big day!</p>
+          <p>Loading…</p>
+          <div class="big"></div>
         </div>
       </section>
 
-      <!-- ROW 2: three big feature cards -->
+      <!-- ROW 2: three feature cards -->
       <section class="grid-features">
-
-        <div class="card">
+        <div class="card" id="card-live">
           <h3><span class="ico">📡</span> View Spike Live</h3>
           <p>Live stream status</p>
           <div class="status"><span id="liveDot" class="dot"></span> <span id="liveLabel">Unavailable</span></div>
           <div class="card-actions"><button class="btn" id="openLiveBtn">View Details</button></div>
         </div>
 
-        <div class="card">
+        <div class="card" id="card-health">
           <h3><span class="ico">❤️</span> Spike's Health</h3>
           <p>Current health summary</p>
-          <div class="status"><span class="dot is-good"></span> Perfect</div>
-          <div class="card-actions"><button class="btn">View Details</button></div>
+          <div class="status"><span class="dot is-good"></span> <span id="healthStatus">Perfect</span></div>
         </div>
 
-        <div class="card">
+        <div class="card" id="card-pictures">
           <h3><span class="ico">🖼️</span> Pictures of Spike</h3>
-          <p>Check out the latest photos</p>
-          <div class="card-actions"><button class="btn">View Gallery</button></div>
+          <p>Loading…</p>
+          <div class="card-actions"><button class="btn" id="openGalleryBtn">View Gallery</button></div>
         </div>
-
       </section>
 
-      <!-- ROW 3: smaller info cards -->
+      <!-- ROW 3: Age Tracking (double width) + More About Dragons + Caretakers + Tank -->
       <section class="grid-small">
-
-        <div class="card">
-          <h3><span class="ico">🎬</span> Thank You Video</h3>
-          <p>Watch the latest thank you video</p>
-          <div class="card-actions"><button class="btn">▶ Play</button></div>
-        </div>
-
-        <div class="card">
+        <div class="card span2" id="card-age">
           <h3><span class="ico">📅</span> Age Tracking</h3>
-          <p>Track Spike's age and milestones</p>
-          <div class="card-actions"><button class="btn">View Details</button></div>
+          <p id="ageValue">Loading…</p>
+          <div class="age-stage" id="ageStage"></div>
+          <div class="age-next" id="ageNext"></div>
         </div>
 
-        <div class="card">
+        <div class="card" id="card-dragons">
           <h3><span class="ico">ℹ️</span> More About Dragons</h3>
-          <p>Learn about Spike's personality</p>
-          <div class="card-actions"><button class="btn">View Details</button></div>
+          <p>Fun facts about bearded dragons!</p>
+          <div class="card-actions"><button class="btn" id="openFactsBtn">View Details</button></div>
         </div>
 
-        <div class="card">
+        <div class="card" id="card-caretakers">
           <h3><span class="ico">👥</span> Caretakers</h3>
-          <p>Meet the people who care for Spike</p>
-          <div class="card-actions"><button class="btn">View Details</button></div>
+          <p>Loading…</p>
         </div>
 
-        <div class="card">
+        <div class="card" id="card-tank">
           <h3><span class="ico">💧</span> Tank Condition</h3>
-          <p>Check temperature and humidity</p>
-          <div class="card-actions"><button class="btn">View Details</button></div>
+          <p>Loading…</p>
         </div>
-
       </section>
+
+      <!-- Footer credits -->
+      <div class="credits">
+        <div class="dev-main">Brycton | Main Developer / Creator</div>
+        <div>Uncle Stephen | Idea giver · Teacher · Helps with ideas &amp; issues</div>
+      </div>
 
     </main>
   </div>
 
-  <!--
-    ============================================================
-      OPTIONAL: make the sidebar links highlight when clicked.
-      This is a tiny bit of JavaScript — totally optional.
-      Brycton can ignore this or learn from it later.
-    ============================================================
-  -->
-  <!-- ===== Spike Live modal ===== -->
-  <div id="liveBackdrop" style="position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.7);z-index:1000;padding:20px">
-    <div class="card" style="max-width:900px;width:100%">
+  <!-- ===== Live modal ===== -->
+  <div id="liveBackdrop" class="backdrop">
+    <div class="modal">
       <h3><span class="ico">📡</span> View Spike Live 🦎</h3>
       <div style="margin-top:12px">
         <div id="spikeLiveHolder" style="width:100%;min-height:320px;border-radius:12px;background:#000;overflow:hidden"></div>
@@ -393,30 +225,77 @@
     </div>
   </div>
 
-  <style>
-    #liveDot.is-live{ background:var(--good); animation:livePulse 1.6s ease-in-out infinite; }
-    #liveDot.is-off{ background:var(--warn); animation:none; }
-    @keyframes livePulse{
-      0%{ box-shadow:0 0 0 0 rgba(46,204,113,0.55); }
-      70%{ box-shadow:0 0 0 10px rgba(46,204,113,0); }
-      100%{ box-shadow:0 0 0 0 rgba(46,204,113,0); }
-    }
-  </style>
+  <!-- ===== Gallery modal ===== -->
+  <div id="galleryBackdrop" class="backdrop">
+    <div class="modal">
+      <h3><span class="ico">🖼️</span> Pictures of Spike</h3>
+      <div id="galleryGrid" class="gallery-grid"></div>
+      <div class="card-actions" style="text-align:right"><button class="btn" id="closeGallery">Close</button></div>
+    </div>
+  </div>
+
+  <!-- ===== Dragon facts modal ===== -->
+  <div id="factsBackdrop" class="backdrop">
+    <div class="modal" style="max-width:640px">
+      <h3><span class="ico">🐉</span> More About Dragons</h3>
+      <ul id="factsList"></ul>
+      <div class="card-actions" style="text-align:right"><button class="btn" id="closeFacts">Close</button></div>
+    </div>
+  </div>
+
+  <!-- ===== Photo lightbox ===== -->
+  <div id="lightbox">
+    <img id="lightboxImg" src="" alt="" />
+    <div class="cap" id="lightboxCap"></div>
+  </div>
 
   <script>
-    // sidebar highlight
-    document.querySelectorAll('.nav-item').forEach(function(item){
-      item.addEventListener('click', function(){
-        document.querySelectorAll('.nav-item').forEach(function(n){ n.classList.remove('active'); });
-        item.classList.add('active');
-      });
+    // ============ helpers ============
+    function esc(s){ const d=document.createElement('div'); d.textContent=(s==null?'':String(s)); return d.innerHTML; }
+
+    // ============ Dragon facts ============
+    const DRAGON_FACTS = [
+      "🏜️ Bearded dragons come from the deserts and dry woodlands of central Australia.",
+      "🧔 Their 'beard' is spiky throat skin that puffs up and turns dark when they're excited or feel threatened.",
+      "☀️ They're cold-blooded, so they bask in heat to warm up before eating.",
+      "🥗 They're omnivores — babies eat more bugs, adults eat more leafy greens.",
+      "👋 They 'arm wave' and head-bob to communicate with each other.",
+      "👁️ They have a 'third eye' on top of their head that senses light and shadows from above.",
+      "🏃 When scared, they can run on just their two back legs!",
+      "⏳ With great care, bearded dragons can live 10–15 years."
+    ];
+    document.getElementById('factsList').innerHTML = DRAGON_FACTS.map(function(f){ return '<li>'+f+'</li>'; }).join('');
+
+    // ============ generic modal open/close ============
+    function show(id){ document.getElementById(id).style.display='flex'; }
+    function hide(id){ document.getElementById(id).style.display='none'; }
+    document.getElementById('openFactsBtn').addEventListener('click', function(){ show('factsBackdrop'); });
+    document.getElementById('closeFacts').addEventListener('click', function(){ hide('factsBackdrop'); });
+    document.getElementById('openGalleryBtn').addEventListener('click', function(){ show('galleryBackdrop'); });
+    document.getElementById('closeGallery').addEventListener('click', function(){ hide('galleryBackdrop'); });
+    document.querySelectorAll('.backdrop').forEach(function(b){
+      b.addEventListener('click', function(e){ if(e.target===b) b.style.display='none'; });
+    });
+    // lightbox
+    const lb = document.getElementById('lightbox');
+    lb.addEventListener('click', function(){ lb.style.display='none'; });
+    function openLightbox(url, cap){
+      document.getElementById('lightboxImg').src = url;
+      document.getElementById('lightboxCap').textContent = cap || '';
+      lb.style.display='flex';
+    }
+    document.addEventListener('keydown', function(e){
+      if(e.key==='Escape'){
+        document.querySelectorAll('.backdrop').forEach(function(b){ b.style.display='none'; });
+        lb.style.display='none';
+        stopSpikeLive();
+      }
     });
 
-    // ---- Spike live feed (go2rtc MSE via WebSocket) ----
+    // ============ Live feed (go2rtc MSE via WebSocket) ============
     const liveBackdrop = document.getElementById('liveBackdrop');
     const WS_URL = 'wss://brycton.kingscorner.us/live/api/ws?src=pet_cam';
     let spikeStream = null;
-
     function startSpikeLive(){
       stopSpikeLive();
       const statusEl = document.getElementById('liveStatus');
@@ -424,187 +303,171 @@
       statusEl.textContent = 'Connecting…';
       spikeStream = document.createElement('video-stream');
       spikeStream.setAttribute('mode','mse');
-      spikeStream.style.width = '100%';
-      spikeStream.style.display = 'block';
+      spikeStream.style.width='100%'; spikeStream.style.display='block';
       holder.appendChild(spikeStream);
-      try { spikeStream.mode = 'mse'; spikeStream.src = WS_URL; } catch(e){}
-      let done = false;
-      const iv = setInterval(function(){
-        const v = spikeStream && spikeStream.video;
-        if (v && !v.paused && v.readyState >= 3){ statusEl.textContent = 'Live'; done = true; clearInterval(iv); }
-      }, 400);
-      setTimeout(function(){ if(!done && statusEl.textContent.indexOf('Connecting')===0) statusEl.textContent = "Spike's camera is waking up… give it a moment!"; }, 9000);
+      try { spikeStream.mode='mse'; spikeStream.src=WS_URL; } catch(e){}
+      let done=false;
+      const iv=setInterval(function(){
+        const v=spikeStream && spikeStream.video;
+        if(v && !v.paused && v.readyState>=3){ statusEl.textContent='Live'; done=true; clearInterval(iv); }
+      },400);
+      setTimeout(function(){ if(!done && statusEl.textContent.indexOf('Connecting')===0) statusEl.textContent="Spike's camera is waking up… give it a moment!"; },9000);
     }
     function stopSpikeLive(){
-      if (spikeStream){ try { spikeStream.src=''; } catch(e){} try { spikeStream.remove(); } catch(e){} spikeStream=null; }
-      const holder = document.getElementById('spikeLiveHolder');
-      if (holder) holder.innerHTML = '';
+      if(spikeStream){ try{ spikeStream.src=''; }catch(e){} try{ spikeStream.remove(); }catch(e){} spikeStream=null; }
+      const holder=document.getElementById('spikeLiveHolder'); if(holder) holder.innerHTML='';
     }
-    document.getElementById('openLiveBtn').addEventListener('click', function(){ liveBackdrop.style.display='flex'; startSpikeLive(); });
-    document.getElementById('closeLive').addEventListener('click', function(){ liveBackdrop.style.display='none'; stopSpikeLive(); });
-    document.addEventListener('keydown', function(e){ if(e.key==='Escape' && liveBackdrop.style.display==='flex'){ liveBackdrop.style.display='none'; stopSpikeLive(); } });
+    document.getElementById('openLiveBtn').addEventListener('click', function(){ show('liveBackdrop'); startSpikeLive(); });
+    document.getElementById('closeLive').addEventListener('click', function(){ hide('liveBackdrop'); stopSpikeLive(); });
 
-    // ---- Live status dot poller ----
+    // live status dot poller
     (function(){
-      const STREAMS_URL = 'https://brycton.kingscorner.us/live/api/streams?src=pet_cam';
+      const STREAMS_URL='https://brycton.kingscorner.us/live/api/streams?src=pet_cam';
       async function check(){
-        const dot = document.getElementById('liveDot');
-        const label = document.getElementById('liveLabel');
-        if (!dot || !label) return;
+        const dot=document.getElementById('liveDot'); const label=document.getElementById('liveLabel');
+        if(!dot||!label) return;
         try{
-          const r = await fetch(STREAMS_URL, { cache:'no-store' });
-          if(!r.ok) throw 0;
-          const d = await r.json();
-          const live = d && Array.isArray(d.producers) && d.producers.length > 0;
+          const r=await fetch(STREAMS_URL,{cache:'no-store'}); if(!r.ok) throw 0;
+          const d=await r.json();
+          const live=d && Array.isArray(d.producers) && d.producers.length>0;
           if(live){ dot.classList.remove('is-off'); dot.classList.add('is-live'); label.textContent='Live'; }
-          else { dot.classList.remove('is-live'); dot.classList.add('is-off'); label.textContent='Unavailable'; }
-        }catch(e){
-          dot.classList.remove('is-live'); dot.classList.add('is-off'); label.textContent='Unavailable';
-        }
+          else{ dot.classList.remove('is-live'); dot.classList.add('is-off'); label.textContent='Unavailable'; }
+        }catch(e){ dot.classList.remove('is-live'); dot.classList.add('is-off'); label.textContent='Unavailable'; }
       }
-      check(); setInterval(check, 20000);
+      check(); setInterval(check,20000);
     })();
-  </script>
-  <!-- ===== Dragon facts modal ===== -->
-  <div id="factsBackdrop" style="position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.7);z-index:1000;padding:20px">
-    <div class="card" style="max-width:640px;width:100%">
-      <h3><span class="ico">🐉</span> More About Dragons</h3>
-      <ul id="factsList" style="line-height:1.7;margin:12px 0;padding-left:20px"></ul>
-      <div class="card-actions" style="text-align:right"><button class="btn" id="closeFacts">Close</button></div>
-    </div>
-  </div>
 
-  <!-- ===== Photo gallery modal ===== -->
-  <div id="galleryBackdrop" style="position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.75);z-index:1000;padding:20px">
-    <div class="card" style="max-width:900px;width:100%;max-height:90vh;overflow:auto">
-      <h3><span class="ico">🖼️</span> Pictures of Spike</h3>
-      <div id="galleryGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-top:12px"></div>
-      <div class="card-actions" style="text-align:right"><button class="btn" id="closeGallery">Close</button></div>
-    </div>
-  </div>
-
-  <script>
-    // ===== Live content wiring (reads /api/content, fills the cards) =====
-    (function(){
-      function esc(s){ const d=document.createElement('div'); d.textContent=(s==null?'':String(s)); return d.innerHTML; }
-      function cardByHeading(t){
-        return Array.prototype.slice.call(document.querySelectorAll('.card'))
-          .find(function(c){ var h=c.querySelector('h3'); return h && h.textContent.indexOf(t)!==-1; });
-      }
-      function btnInCard(card){ return card ? card.querySelector('.card-actions .btn, .card-actions button') : null; }
-
-      const DRAGON_FACTS = [
-        "🏜️ Bearded dragons come from the deserts and dry woodlands of central Australia.",
-        "🧔 Their 'beard' is spiky throat skin that puffs up and turns dark when they're excited or feel threatened.",
-        "☀️ They're cold-blooded, so they bask in heat to warm up before eating.",
-        "🥗 They're omnivores — babies eat more bugs, adults eat more leafy greens.",
-        "👋 They 'arm wave' and head-bob to communicate with each other.",
-        "👁️ They have a 'third eye' on top of their head that senses light and shadows from above.",
-        "🏃 When scared, they can run on just their two back legs!",
-        "⏳ With great care, bearded dragons can live 10–15 years."
+    // ============ Age + growth stage ============
+    // Stages: Baby 0-2mo, Juvenile 2-12mo, Sub-Adult 12-18mo, Adult 18mo+
+    function ageParts(birth){
+      const now=new Date(), b=new Date(birth+'T00:00:00');
+      if(isNaN(b)) return null;
+      let y=now.getFullYear()-b.getFullYear();
+      let m=now.getMonth()-b.getMonth();
+      let d=now.getDate()-b.getDate();
+      if(d<0){ m--; const days=new Date(now.getFullYear(),now.getMonth(),0).getDate(); d+=days; }
+      if(m<0){ y--; m+=12; }
+      const totalMonths=y*12+m+d/30.0;
+      return {y:y,m:m,d:d,totalMonths:totalMonths};
+    }
+    function stageInfo(totalMonths){
+      const stages=[
+        {name:"🥚 Baby", start:0, end:2},
+        {name:"🦎 Juvenile", start:2, end:12},
+        {name:"🐉 Sub-Adult", start:12, end:18},
+        {name:"👑 Adult", start:18, end:null}
       ];
-
-      async function loadContent(){
-        let d;
-        try {
-          const r = await fetch('/api/content', { cache:'no-store' });
-          if (!r.ok) return;
-          d = await r.json();
-        } catch(e){ return; }
-
-        // --- Announcement (newest) ---
-        const ann = cardByHeading('Current Announcement');
-        if (ann){
-          ann.querySelectorAll('p').forEach(function(p){ p.remove(); });
-          const box = document.createElement('div');
-          const a = (d.announcements && d.announcements[0]) || null;
-          if (a){
-            box.innerHTML =
-              '<p><strong style="color:var(--cream)">'+esc(a.title)+'</strong></p>' +
-              '<p style="margin-top:6px">'+esc(a.body)+'</p>' +
-              '<p style="margin-top:8px;font-size:12px;color:var(--muted)">'+esc(a.created_at)+'</p>';
+      for(const s of stages){
+        if(s.end===null || totalMonths<s.end){
+          let next="";
+          if(s.end!==null){
+            const monthsLeft=s.end-totalMonths;
+            const daysLeft=Math.max(0,Math.round(monthsLeft*30));
+            const nextName=stages[stages.indexOf(s)+1].name;
+            next="About "+daysLeft+" days until "+nextName+"!";
           } else {
-            box.innerHTML = '<p style="color:var(--muted)">No announcements yet.</p>';
+            next="Fully grown — a majestic adult dragon! 👑";
           }
-          ann.appendChild(box);
-        }
-
-        // --- Tank condition ---
-        const tank = cardByHeading('Tank Condition');
-        if (tank && d.tank){
-          tank.querySelectorAll('p').forEach(function(p){ p.remove(); });
-          const p = document.createElement('p');
-          p.innerHTML =
-            '🔥 Hot side: <strong>'+esc(d.tank.hot||'—')+'</strong><br>' +
-            '❄️ Cool side: <strong>'+esc(d.tank.cool||'—')+'</strong><br>' +
-            '💧 Humidity: <strong>'+esc(d.tank.humidity||'—')+'</strong>';
-          const h = tank.querySelector('h3');
-          if (h) h.insertAdjacentElement('afterend', p);
-        }
-
-        // --- Health ---
-        const health = cardByHeading("Spike's Health");
-        if (health && d.health){
-          const notes = health.querySelector('p');
-          if (notes) notes.textContent = d.health.notes || '';
-          const st = health.querySelector('.status');
-          if (st) st.innerHTML = '<span class="dot is-good"></span> '+esc(d.health.status||'');
-        }
-
-        // --- Pictures gallery ---
-        const photos = d.photos || [];
-        const pics = cardByHeading('Pictures of Spike');
-        if (pics){
-          const summ = pics.querySelector('p');
-          if (summ) summ.textContent = photos.length ? (photos.length + ' photo' + (photos.length>1?'s':'')) : 'No photos yet';
-          const gbtn = btnInCard(pics);
-          if (gbtn) gbtn.addEventListener('click', function(){ openGallery(photos); });
+          return {stage:s.name, next:next};
         }
       }
+      return {stage:"👑 Adult", next:"Fully grown!"};
+    }
 
-      // gallery modal
-      const galleryBackdrop = document.getElementById('galleryBackdrop');
-      const galleryGrid = document.getElementById('galleryGrid');
-      function openGallery(photos){
-        galleryGrid.innerHTML = photos.length ? '' : '<p style="color:var(--muted)">No photos yet — check back soon!</p>';
-        photos.forEach(function(p){
-          const fig = document.createElement('figure');
-          fig.style.margin='0';
-          fig.innerHTML =
-            '<img src="'+p.url+'" alt="'+esc(p.caption)+'" style="width:100%;height:150px;object-fit:cover;border-radius:10px;display:block">' +
-            (p.caption ? '<figcaption style="font-size:12px;color:var(--muted);margin-top:4px">'+esc(p.caption)+'</figcaption>' : '');
-          galleryGrid.appendChild(fig);
-        });
-        galleryBackdrop.style.display='flex';
-      }
-      document.getElementById('closeGallery').addEventListener('click', function(){ galleryBackdrop.style.display='none'; });
+    // ============ Load all content ============
+    async function loadContent(){
+      let d;
+      try{ const r=await fetch('/api/content',{cache:'no-store'}); if(!r.ok) return; d=await r.json(); }
+      catch(e){ return; }
 
-      // dragon facts modal
-      const factsBackdrop = document.getElementById('factsBackdrop');
-      const factsList = document.getElementById('factsList');
-      factsList.innerHTML = DRAGON_FACTS.map(function(f){ return '<li>'+f+'</li>'; }).join('');
-      const dragonsCard = (function(){
-        return Array.prototype.slice.call(document.querySelectorAll('.card'))
-          .find(function(c){ var h=c.querySelector('h3'); return h && h.textContent.indexOf('More About Dragons')!==-1; });
-      })();
-      if (dragonsCard){
-        const summ = dragonsCard.querySelector('p');
-        if (summ) summ.textContent = 'Fun facts about bearded dragons!';
-        const b = dragonsCard.querySelector('.card-actions .btn, .card-actions button');
-        if (b) b.addEventListener('click', function(){ factsBackdrop.style.display='flex'; });
-      }
-      document.getElementById('closeFacts').addEventListener('click', function(){ factsBackdrop.style.display='none'; });
+      // announcement
+      const ann=document.getElementById('card-announcement');
+      const a=(d.announcements&&d.announcements[0])||null;
+      ann.querySelectorAll('p,div.body').forEach(function(el){ if(!el.classList.contains('ico')) el.remove(); });
+      const abox=document.createElement('div'); abox.className='body';
+      abox.innerHTML = a
+        ? '<p><strong style="color:var(--cream)">'+esc(a.title)+'</strong></p><p style="margin-top:6px">'+esc(a.body)+'</p><p style="margin-top:8px;font-size:12px;color:var(--muted)">'+esc(a.created_at)+'</p>'
+        : '<p style="color:var(--muted)">No announcements yet.</p>';
+      ann.appendChild(abox);
 
-      document.addEventListener('keydown', function(e){
-        if (e.key==='Escape'){
-          galleryBackdrop.style.display='none';
-          factsBackdrop.style.display='none';
-        }
+      // countdown (soonest upcoming)
+      const cbox=document.getElementById('card-countdown');
+      const big=cbox.querySelector('.big'); const cp=cbox.querySelector('p');
+      const upcoming=(d.countdowns||[]).map(function(c){ return {title:c.title, t:new Date(c.target_date+'T00:00:00')}; })
+        .filter(function(c){ return !isNaN(c.t) && (c.t - new Date())>-86400000; })
+        .sort(function(x,y){ return x.t-y.t; });
+      window._nextCountdown = upcoming[0] || null;
+      renderCountdown();
+
+      // health
+      const hs=document.getElementById('healthStatus');
+      if(hs && d.health){ hs.textContent = d.health.status || 'Perfect'; }
+      const hp=document.querySelector('#card-health p');
+      if(hp && d.health){ hp.textContent = d.health.notes || ''; }
+
+      // pictures
+      const photos=d.photos||[];
+      const pp=document.querySelector('#card-pictures p');
+      if(pp) pp.textContent = photos.length ? (photos.length+' photo'+(photos.length>1?'s':'')+' — click to view') : 'No photos yet';
+      const grid=document.getElementById('galleryGrid');
+      grid.innerHTML = photos.length ? '' : '<p style="color:var(--muted)">No photos yet — check back soon!</p>';
+      photos.forEach(function(p){
+        const fig=document.createElement('figure'); fig.style.margin='0';
+        fig.innerHTML='<img src="'+p.url+'" alt="'+esc(p.caption)+'">'+(p.caption?'<figcaption style="font-size:12px;color:var(--muted);margin-top:4px">'+esc(p.caption)+'</figcaption>':'');
+        const img=fig.querySelector('img');
+        img.addEventListener('click', function(){ openLightbox(p.url, p.caption); });
+        grid.appendChild(fig);
       });
 
-      loadContent();
-      setInterval(loadContent, 30000);
-    })();
+      // tank
+      const tp=document.querySelector('#card-tank p');
+      if(tp && d.tank){
+        tp.innerHTML='🔥 Hot: <strong>'+esc(d.tank.hot||'—')+'</strong><br>❄️ Cool: <strong>'+esc(d.tank.cool||'—')+'</strong><br>💧 Humidity: <strong>'+esc(d.tank.humidity||'—')+'</strong>';
+      }
+
+      // caretakers
+      const cp2=document.querySelector('#card-caretakers p');
+      const carers=d.caretakers||[];
+      if(cp2){
+        cp2.innerHTML = carers.length
+          ? carers.map(function(c){ return '<div style="margin-top:4px">🦎 <strong style="color:var(--cream)">'+esc(c.name)+'</strong>'+(c.role?' — '+esc(c.role):'')+'</div>'; }).join('')
+          : 'No caretakers listed yet.';
+      }
+
+      // age tracking
+      const av=document.getElementById('ageValue'), ast=document.getElementById('ageStage'), an=document.getElementById('ageNext');
+      if(d.birthday){
+        const ap=ageParts(d.birthday);
+        if(ap){
+          av.innerHTML='Spike is <strong style="color:var(--cream)">'+ap.y+' year'+(ap.y!==1?'s':'')+', '+ap.m+' month'+(ap.m!==1?'s':'')+', '+ap.d+' day'+(ap.d!==1?'s':'')+'</strong> old.';
+          const si=stageInfo(ap.totalMonths);
+          ast.textContent='Growth stage: '+si.stage;
+          an.textContent=si.next;
+        }
+      } else {
+        av.textContent='🎂 Birthday not set yet — set it in the admin panel!';
+        ast.textContent=''; an.textContent='';
+      }
+    }
+
+    // live-updating countdown text (ticks every second)
+    function renderCountdown(){
+      const cbox=document.getElementById('card-countdown');
+      const big=cbox.querySelector('.big'); const cp=cbox.querySelector('p');
+      const c=window._nextCountdown;
+      if(!c){ cp.textContent='No countdowns yet.'; big.textContent=''; return; }
+      cp.textContent=c.title;
+      const diff=c.t - new Date();
+      if(diff<=0){ big.textContent='🎉 Today!'; return; }
+      const days=Math.floor(diff/86400000);
+      const hrs=Math.floor((diff%86400000)/3600000);
+      const mins=Math.floor((diff%3600000)/60000);
+      big.textContent=days+'d '+hrs+'h '+mins+'m';
+    }
+    setInterval(renderCountdown, 1000);
+
+    loadContent();
+    setInterval(loadContent, 30000);
   </script>
 </body>
 </html>
