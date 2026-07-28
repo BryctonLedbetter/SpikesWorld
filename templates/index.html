@@ -302,10 +302,10 @@
       const holder = document.getElementById('spikeLiveHolder');
       statusEl.textContent = 'Connecting…';
       spikeStream = document.createElement('video-stream');
-      spikeStream.setAttribute('mode','mse');
+      spikeStream.setAttribute('mode','mse,webrtc,hls');
       spikeStream.style.width='100%'; spikeStream.style.display='block';
       holder.appendChild(spikeStream);
-      try { spikeStream.mode='mse'; spikeStream.src=WS_URL; } catch(e){}
+      try { spikeStream.mode='mse,webrtc,hls'; spikeStream.src=WS_URL; } catch(e){}
       let done=false;
       const iv=setInterval(function(){
         const v=spikeStream && spikeStream.video;
