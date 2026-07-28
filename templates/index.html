@@ -295,6 +295,9 @@
     // ============ Live feed (go2rtc MSE via WebSocket) ============
     const liveBackdrop = document.getElementById('liveBackdrop');
     const WS_URL = 'wss://brycton.kingscorner.us/live/api/ws?src=pet_cam&media=video';
+    // iOS (iPhone/iPad) can't play MSE reliably -> force webrtc then hls; everyone else prefers mse
+    const IS_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1);
+    const SPIKE_MODES = IS_IOS ? 'webrtc,hls' : 'mse,webrtc,hls';
     let spikeStream = null;
     function startSpikeLive(){
       stopSpikeLive();
@@ -302,10 +305,10 @@
       const holder = document.getElementById('spikeLiveHolder');
       statusEl.textContent = 'Connecting…';
       spikeStream = document.createElement('video-stream');
-      spikeStream.setAttribute('mode','mse,webrtc,hls');
+      spikeStream.setAttribute('mode', SPIKE_MODES);
       spikeStream.style.width='100%'; spikeStream.style.display='block';
       holder.appendChild(spikeStream);
-      try { spikeStream.mode='mse,webrtc,hls'; spikeStream.src=WS_URL; } catch(e){}
+      try { spikeStream.mode=SPIKE_MODES; spikeStream.src=WS_URL; } catch(e){}
       let done=false;
       const iv=setInterval(function(){
         const v=spikeStream && spikeStream.video;
