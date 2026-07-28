@@ -294,7 +294,7 @@
 
     // ============ Live feed (go2rtc MSE via WebSocket) ============
     const liveBackdrop = document.getElementById('liveBackdrop');
-    const WS_URL = 'wss://brycton.kingscorner.us/live/api/ws?src=pet_cam';
+    const WS_URL = 'wss://brycton.kingscorner.us/live/api/ws?src=pet_cam&media=video';
     let spikeStream = null;
     function startSpikeLive(){
       stopSpikeLive();
